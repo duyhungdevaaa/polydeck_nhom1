@@ -5,8 +5,9 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.view.animation.OvershootInterpolator;
+import android.widget.ImageView;
+
 import androidx.appcompat.app.AppCompatActivity;
-import com.google.android.material.card.MaterialCardView;
 
 public class WelcomeActivity extends AppCompatActivity {
 
@@ -21,23 +22,22 @@ public class WelcomeActivity extends AppCompatActivity {
             getSupportActionBar().hide();
         }
 
-        MaterialCardView logoCard = findViewById(R.id.logoCard);
-        logoCard.setScaleX(0.5f);
-        logoCard.setScaleY(0.5f);
-        logoCard.animate()
+        ImageView imgLogo = findViewById(R.id.imgLogo);
+
+        imgLogo.setScaleX(0.5f);
+        imgLogo.setScaleY(0.5f);
+
+        imgLogo.animate()
                 .scaleX(1f)
                 .scaleY(1f)
                 .setDuration(800)
                 .setInterpolator(new OvershootInterpolator())
                 .start();
 
-        new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                Intent intent = new Intent(WelcomeActivity.this, LoginActivity.class);
-                startActivity(intent);
-                finish();
-            }
+        new Handler(Looper.getMainLooper()).postDelayed(() -> {
+            Intent intent = new Intent(WelcomeActivity.this, LoginActivity.class);
+            startActivity(intent);
+            finish();
         }, SPLASH_DELAY);
     }
 }
