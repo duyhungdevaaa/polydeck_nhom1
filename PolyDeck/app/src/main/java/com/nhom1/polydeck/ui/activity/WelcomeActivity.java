@@ -1,4 +1,4 @@
-package com.nhom1.polydeck;
+package com.nhom1.polydeck.ui.activity;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -8,6 +8,8 @@ import android.view.animation.OvershootInterpolator;
 import android.widget.ImageView;
 
 import androidx.appcompat.app.AppCompatActivity;
+
+import com.nhom1.polydeck.R;
 
 public class WelcomeActivity extends AppCompatActivity {
 
@@ -35,7 +37,7 @@ public class WelcomeActivity extends AppCompatActivity {
                 .start();
 
         new Handler(Looper.getMainLooper()).postDelayed(() -> {
-            Intent intent = new Intent(WelcomeActivity.this, LoginActivity.class);
+            Intent intent = new Intent(WelcomeActivity.this, AdminDashboardActivity.class);
             startActivity(intent);
             finish();
         }, SPLASH_DELAY);
