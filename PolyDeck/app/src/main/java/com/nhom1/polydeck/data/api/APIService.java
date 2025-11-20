@@ -1,7 +1,13 @@
 package com.nhom1.polydeck.data.api;
 
 import com.nhom1.polydeck.data.model.AdminStats;
+import com.nhom1.polydeck.data.model.ApiResponse;
 import com.nhom1.polydeck.data.model.BoTu;
+import com.nhom1.polydeck.data.model.GoogleLoginRequest;
+import com.nhom1.polydeck.data.model.LoginRequest;
+import com.nhom1.polydeck.data.model.LoginResponse;
+import com.nhom1.polydeck.data.model.RegisterRequest;
+import com.nhom1.polydeck.data.model.RegisterResponse;
 import com.nhom1.polydeck.data.model.TuVung;
 import com.nhom1.polydeck.data.model.User;
 
@@ -11,6 +17,16 @@ import retrofit2.Call;
 import retrofit2.http.*;
 
 public interface APIService {
+
+    // ============= AUTHENTICATION =============
+    @POST("api/auth/register")
+    Call<ApiResponse<RegisterResponse>> register(@Body RegisterRequest request);
+
+    @POST("api/auth/login")
+    Call<ApiResponse<LoginResponse>> login(@Body LoginRequest request);
+
+    @POST("api/auth/google")
+    Call<ApiResponse<LoginResponse>> googleLogin(@Body GoogleLoginRequest request);
 
     // ============= ADMIN DASHBOARD =============
     @GET("admin/stats")
