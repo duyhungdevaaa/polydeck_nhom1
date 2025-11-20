@@ -14,16 +14,34 @@ app.use(express.urlencoded({ extended: true }));
 require('./models/ChuDe');
 require('./models/TuVung');
 require('./models/NguoiDung');
+require('./models/TienDoHocTap');
+require('./models/BaiQuiz');
 require('./models/CauHoi');
 require('./models/LichSuLamBai');
-require('./models/ChiTietLamBai');
 require('./models/ThongBao');
-require('./models/ThongBaoDaDoc');
+require('./models/YeuCauHoTro');
 
-// Routes (sẽ thêm sau)
+// Import middleware
+// const errorHandler = require('./middleware/errorHandler');
+// const authMiddleware = require('./middleware/auth');
+
+// Routes
 app.get('/', (req, res) => {
   res.json({ message: 'PolyDeck API Server is running!' });
 });
+
+// TODO: Uncomment và implement các routes sau
+// app.use('/api/auth', require('./routes/auth'));
+// app.use('/api/chu-de', require('./routes/chuDe'));
+// app.use('/api/tu-vung', require('./routes/tuVung'));
+// app.use('/api/quiz', require('./routes/quiz'));
+// app.use('/api/nguoi-dung', require('./routes/nguoiDung'));
+// app.use('/api/thong-bao', require('./routes/thongBao'));
+// app.use('/api/ho-tro', require('./routes/hoTro'));
+// app.use('/api/admin', require('./routes/admin'));
+
+// Error handler middleware (đặt cuối cùng)
+// app.use(errorHandler);
 
 const PORT = process.env.PORT || 3000;
 

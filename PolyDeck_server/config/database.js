@@ -52,8 +52,15 @@ const connectDB = async () => {
 const initDatabase = async (db) => {
   try {
     const collections = [
-      'chude', 'tuvung', 'nguoidung', 'cauhoi', 
-      'lichsulambai', 'chitietlambai', 'thongbao', 'thongbaodadoc'
+      'chu_de',
+      'tu_vung',
+      'nguoi_dung',
+      'tien_do_hoc_tap',
+      'bai_quiz',
+      'cau_hoi',
+      'lich_su_lam_bai',
+      'thong_bao',
+      'yeu_cau_ho_tro'
     ];
     
     const existingCollections = await db.listCollections().toArray();

@@ -2,20 +2,22 @@
 const ChuDe = require('./ChuDe');
 const TuVung = require('./TuVung');
 const NguoiDung = require('./NguoiDung');
+const TienDoHocTap = require('./TienDoHocTap');
+const BaiQuiz = require('./BaiQuiz');
 const CauHoi = require('./CauHoi');
 const LichSuLamBai = require('./LichSuLamBai');
-const ChiTietLamBai = require('./ChiTietLamBai');
 const ThongBao = require('./ThongBao');
-const ThongBaoDaDoc = require('./ThongBaoDaDoc');
+const YeuCauHoTro = require('./YeuCauHoTro');
 
 module.exports = {
   ChuDe,
   TuVung,
   NguoiDung,
+  TienDoHocTap,
+  BaiQuiz,
   CauHoi,
   LichSuLamBai,
-  ChiTietLamBai,
   ThongBao,
-  ThongBaoDaDoc
+  YeuCauHoTro
 };
 

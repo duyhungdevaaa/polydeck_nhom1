@@ -1,20 +1,18 @@
 const mongoose = require('mongoose');
 
 const chuDeSchema = new mongoose.Schema({
-  ten_chu_de: {
-    type: String,
-    required: true
-  },
-  anh_bia: {
-    type: String,
-    default: null
-  }
+  ma_chu_de: { type: String, required: true, unique: true, trim: true },
+  ten_chu_de: { type: String, required: true, trim: true },
+  link_anh_icon: { type: String, default: null },
+  so_luong_tu: { type: Number, default: 0, min: 0 },
+  so_luong_quiz: { type: Number, default: 0, min: 0 },
+  ngay_tao: { type: Date, default: Date.now }
 }, {
   timestamps: true,
-  collection: 'chude'
+  collection: 'chu_de'
 });
 
-// Index để tìm kiếm nhanh
+chuDeSchema.index({ ma_chu_de: 1 });
 chuDeSchema.index({ ten_chu_de: 1 });
 
 module.exports = mongoose.model('ChuDe', chuDeSchema);

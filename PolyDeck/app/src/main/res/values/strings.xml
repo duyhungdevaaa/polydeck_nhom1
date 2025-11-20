@@ -35,4 +35,16 @@
     <string name="search_users_hint">Tìm kiếm người dùng...</string>
     <string name="total_label">Tổng</string>
     <string name="blocked_label">Bị khóa</string>
+    
+    <!-- Login Screen -->
+    <string name="login_title">Đăng nhập vào tài khoản của bạn</string>
+    <string name="email_label">Email</string>
+    <string name="email_hint">example@email.com</string>
+    <string name="password_label">Mật khẩu</string>
+    <string name="forgot_password">Quên mật khẩu?</string>
+    <string name="login_button">Đăng nhập</string>
+    <string name="or_separator">hoặc</string>
+    <string name="continue_with_google">Tiếp tục với Google</string>
+    <string name="no_account">Chưa có tài khoản?</string>
+    <string name="register">Đăng ký</string>
 </resources>
