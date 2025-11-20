@@ -30,8 +30,8 @@ app.get('/', (req, res) => {
   res.json({ message: 'PolyDeck API Server is running!' });
 });
 
-// TODO: Uncomment và implement các routes sau
-// app.use('/api/auth', require('./routes/auth'));
+// Routes
+app.use('/api/auth', require('./routes/auth'));
 // app.use('/api/chu-de', require('./routes/chuDe'));
 // app.use('/api/tu-vung', require('./routes/tuVung'));
 // app.use('/api/quiz', require('./routes/quiz'));

@@ -9,7 +9,7 @@ import java.util.concurrent.TimeUnit;
 
 public class RetrofitClient {
 
-    private static final String BASE_URL = "http://10.2.0.0:3000/";
+    private static final String BASE_URL = "http://10.0.2.2:3000/"; // 10.0.2.2 = localhost trong Android Emulator
 
     private static Retrofit retrofit;
 
@@ -21,9 +21,9 @@ public class RetrofitClient {
 
             OkHttpClient client = new OkHttpClient.Builder()
                     .addInterceptor(logging)
-                    .connectTimeout(30, TimeUnit.SECONDS)
-                    .readTimeout(30, TimeUnit.SECONDS)
-                    .writeTimeout(30, TimeUnit.SECONDS)
+                    .connectTimeout(10, TimeUnit.SECONDS)
+                    .readTimeout(10, TimeUnit.SECONDS)
+                    .writeTimeout(10, TimeUnit.SECONDS)
                     .build();
 
             retrofit = new Retrofit.Builder()

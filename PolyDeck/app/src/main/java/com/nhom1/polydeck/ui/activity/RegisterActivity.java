@@ -5,7 +5,9 @@ import android.os.Bundle;
 import android.text.method.HideReturnsTransformationMethod;
 import android.text.method.PasswordTransformationMethod;
 import android.view.MotionEvent;
+import android.view.View;
 import android.widget.EditText;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -13,12 +15,23 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.android.material.button.MaterialButton;
 import com.nhom1.polydeck.R;
+import com.nhom1.polydeck.data.api.APIService;
+import com.nhom1.polydeck.data.api.RetrofitClient;
+import com.nhom1.polydeck.data.model.ApiResponse;
+import com.nhom1.polydeck.data.model.RegisterRequest;
+import com.nhom1.polydeck.data.model.RegisterResponse;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class RegisterActivity extends AppCompatActivity {
 
     private EditText inputFullName, inputEmail, inputPassword, inputConfirmPassword;
     private MaterialButton registerButton;
     private TextView loginNow;
+    private ProgressBar progressBar;
+    private APIService apiService;
     private boolean isPasswordVisible = false;
     private boolean isConfirmPasswordVisible = false;
 
@@ -28,6 +41,7 @@ public class RegisterActivity extends AppCompatActivity {
         setContentView(R.layout.activity_register);
 
         initViews();
+        setupAPI();
         setupPasswordToggles();
         setupClickListeners();
     }
@@ -39,6 +53,11 @@ public class RegisterActivity extends AppCompatActivity {
         inputConfirmPassword = findViewById(R.id.inputConfirmPassword);
         registerButton = findViewById(R.id.registerButton);
         loginNow = findViewById(R.id.loginNow);
+        progressBar = findViewById(R.id.progressBar);
+    }
+
+    private void setupAPI() {
+        apiService = RetrofitClient.getApiService();
     }
 
     private void setupPasswordToggles() {
@@ -175,12 +194,61 @@ public class RegisterActivity extends AppCompatActivity {
     }
 
     private void performRegister(String fullName, String email, String password) {
-        // TODO: Call API to register
-        // For now, just show success message
-        Toast.makeText(this, "Đăng ký thành công!", Toast.LENGTH_SHORT).show();
+        showLoading(true);
 
-        // Navigate back to login
-        finish();
+        RegisterRequest request = new RegisterRequest(fullName, email, password);
+
+        Call<ApiResponse<RegisterResponse>> call = apiService.register(request);
+        call.enqueue(new Callback<ApiResponse<RegisterResponse>>() {
+            @Override
+            public void onResponse(Call<ApiResponse<RegisterResponse>> call, Response<ApiResponse<RegisterResponse>> response) {
+                showLoading(false);
+
+                if (response.isSuccessful() && response.body() != null) {
+                    ApiResponse<RegisterResponse> apiResponse = response.body();
+                    if (apiResponse.isSuccess()) {
+                        Toast.makeText(RegisterActivity.this, apiResponse.getMessage(), Toast.LENGTH_SHORT).show();
+                        // Navigate back to login
+                        finish();
+                    } else {
+                        Toast.makeText(RegisterActivity.this, apiResponse.getMessage(), Toast.LENGTH_SHORT).show();
+                    }
+                } else {
+                    // Handle error response
+                    String errorMessage = "Đăng ký thất bại";
+                    if (response.errorBody() != null) {
+                        try {
+                            // Có thể parse error body nếu cần
+                            errorMessage = "Lỗi: " + response.code();
+                        } catch (Exception e) {
+                            errorMessage = "Lỗi kết nối";
+                        }
+                    }
+                    Toast.makeText(RegisterActivity.this, errorMessage, Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<ApiResponse<RegisterResponse>> call, Throwable t) {
+                showLoading(false);
+                String errorMsg = "Lỗi kết nối";
+                if (t.getMessage() != null) {
+                    if (t.getMessage().contains("Failed to connect") || t.getMessage().contains("Unable to resolve host")) {
+                        errorMsg = "Không thể kết nối đến server. Vui lòng kiểm tra:\n- Server đã chạy chưa?\n- IP/URL đúng chưa?";
+                    } else {
+                        errorMsg = "Lỗi: " + t.getMessage();
+                    }
+                }
+                Toast.makeText(RegisterActivity.this, errorMsg, Toast.LENGTH_LONG).show();
+            }
+        });
+    }
+
+    private void showLoading(boolean show) {
+        if (progressBar != null) {
+            progressBar.setVisibility(show ? View.VISIBLE : View.GONE);
+        }
+        registerButton.setEnabled(!show);
     }
 
     @Override
