@@ -22,12 +22,16 @@ import com.google.android.gms.auth.api.signin.GoogleSignInClient;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.tasks.Task;
+import com.google.gson.Gson;
 import com.nhom1.polydeck.data.api.APIService;
 import com.nhom1.polydeck.data.api.RetrofitClient;
 import com.nhom1.polydeck.data.model.ApiResponse;
 import com.nhom1.polydeck.data.model.GoogleLoginRequest;
 import com.nhom1.polydeck.data.model.LoginRequest;
 import com.nhom1.polydeck.data.model.LoginResponse;
+import com.nhom1.polydeck.utils.SessionManager;
+
+import java.io.IOException;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -194,7 +198,9 @@ public class LoginActivity extends AppCompatActivity {
                         LoginResponse loginData = apiResponse.getData();
                         Toast.makeText(LoginActivity.this, apiResponse.getMessage(), Toast.LENGTH_SHORT).show();
                         
-                        // TODO: Lưu thông tin user vào SharedPreferences hoặc Session
+                        // Lưu thông tin user vào session
+                        SessionManager sessionManager = new SessionManager(LoginActivity.this);
+                        sessionManager.saveUserSession(loginData);
                         
                         // Chuyển màn hình dựa vào vai trò
                         Intent intent;
@@ -212,9 +218,21 @@ public class LoginActivity extends AppCompatActivity {
                         Toast.makeText(LoginActivity.this, apiResponse.getMessage(), Toast.LENGTH_SHORT).show();
                     }
                 } else {
+                    // Parse error body để lấy message từ server
                     String errorMessage = "Đăng nhập thất bại";
                     if (response.errorBody() != null) {
                         try {
+                            Gson gson = new Gson();
+                            ApiResponse<?> errorResponse = gson.fromJson(
+                                response.errorBody().string(), 
+                                ApiResponse.class
+                            );
+                            if (errorResponse != null && errorResponse.getMessage() != null) {
+                                errorMessage = errorResponse.getMessage();
+                            } else {
+                                errorMessage = "Lỗi: " + response.code();
+                            }
+                        } catch (IOException e) {
                             errorMessage = "Lỗi: " + response.code();
                         } catch (Exception e) {
                             errorMessage = "Lỗi kết nối";
@@ -292,7 +310,9 @@ public class LoginActivity extends AppCompatActivity {
                         LoginResponse loginData = apiResponse.getData();
                         Toast.makeText(LoginActivity.this, apiResponse.getMessage(), Toast.LENGTH_SHORT).show();
                         
-                        // TODO: Lưu thông tin user vào SharedPreferences
+                        // Lưu thông tin user vào session
+                        SessionManager sessionManager = new SessionManager(LoginActivity.this);
+                        sessionManager.saveUserSession(loginData);
                         
                         // Chuyển màn hình dựa vào vai trò
                         Intent intent;
@@ -308,9 +328,21 @@ public class LoginActivity extends AppCompatActivity {
                         Toast.makeText(LoginActivity.this, apiResponse.getMessage(), Toast.LENGTH_SHORT).show();
                     }
                 } else {
+                    // Parse error body để lấy message từ server
                     String errorMessage = "Đăng nhập Google thất bại";
                     if (response.errorBody() != null) {
                         try {
+                            Gson gson = new Gson();
+                            ApiResponse<?> errorResponse = gson.fromJson(
+                                response.errorBody().string(), 
+                                ApiResponse.class
+                            );
+                            if (errorResponse != null && errorResponse.getMessage() != null) {
+                                errorMessage = errorResponse.getMessage();
+                            } else {
+                                errorMessage = "Lỗi: " + response.code();
+                            }
+                        } catch (IOException e) {
                             errorMessage = "Lỗi: " + response.code();
                         } catch (Exception e) {
                             errorMessage = "Lỗi kết nối";

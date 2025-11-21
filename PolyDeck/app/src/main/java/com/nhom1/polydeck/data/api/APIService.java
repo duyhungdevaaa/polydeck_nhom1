@@ -3,6 +3,7 @@ package com.nhom1.polydeck.data.api;
 import com.nhom1.polydeck.data.model.AdminStats;
 import com.nhom1.polydeck.data.model.ApiResponse;
 import com.nhom1.polydeck.data.model.BoTu;
+import com.nhom1.polydeck.data.model.ForgotPasswordRequest;
 import com.nhom1.polydeck.data.model.GoogleLoginRequest;
 import com.nhom1.polydeck.data.model.LoginRequest;
 import com.nhom1.polydeck.data.model.LoginResponse;
@@ -27,6 +28,9 @@ public interface APIService {
 
     @POST("api/auth/google")
     Call<ApiResponse<LoginResponse>> googleLogin(@Body GoogleLoginRequest request);
+
+    @POST("api/auth/forgot-password")
+    Call<ApiResponse<Void>> forgotPassword(@Body ForgotPasswordRequest request);
 
     // ============= ADMIN DASHBOARD =============
     @GET("admin/stats")
