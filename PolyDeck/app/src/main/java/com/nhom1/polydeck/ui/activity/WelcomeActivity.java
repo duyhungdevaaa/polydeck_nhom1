@@ -10,6 +10,7 @@ import android.widget.ImageView;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.nhom1.polydeck.R;
+import com.nhom1.polydeck.utils.SessionManager;
 
 public class WelcomeActivity extends AppCompatActivity {
 
@@ -37,8 +38,24 @@ public class WelcomeActivity extends AppCompatActivity {
                 .start();
 
         new Handler(Looper.getMainLooper()).postDelayed(() -> {
-            Intent intent = new Intent(WelcomeActivity.this, LoginActivity.class);
-            startActivity(intent);
+            SessionManager sessionManager = new SessionManager(this);
+            
+            // Kiểm tra đã đăng nhập chưa
+            if (sessionManager.isLoggedIn()) {
+                // Đã đăng nhập - chuyển đến màn hình chính
+                String vaiTro = sessionManager.getVaiTro();
+                Intent intent;
+                if (vaiTro != null && vaiTro.equals("admin")) {
+                    intent = new Intent(WelcomeActivity.this, AdminDashboardActivity.class);
+                } else {
+                    intent = new Intent(WelcomeActivity.this, MainActivity.class);
+                }
+                startActivity(intent);
+            } else {
+                // Chưa đăng nhập - chuyển đến màn hình đăng nhập
+                Intent intent = new Intent(WelcomeActivity.this, LoginActivity.class);
+                startActivity(intent);
+            }
             finish();
         }, SPLASH_DELAY);
     }

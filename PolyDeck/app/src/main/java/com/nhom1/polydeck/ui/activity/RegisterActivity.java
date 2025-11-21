@@ -15,11 +15,14 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.android.material.button.MaterialButton;
 import com.nhom1.polydeck.R;
+import com.google.gson.Gson;
 import com.nhom1.polydeck.data.api.APIService;
 import com.nhom1.polydeck.data.api.RetrofitClient;
 import com.nhom1.polydeck.data.model.ApiResponse;
 import com.nhom1.polydeck.data.model.RegisterRequest;
 import com.nhom1.polydeck.data.model.RegisterResponse;
+
+import java.io.IOException;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -207,18 +210,29 @@ public class RegisterActivity extends AppCompatActivity {
                 if (response.isSuccessful() && response.body() != null) {
                     ApiResponse<RegisterResponse> apiResponse = response.body();
                     if (apiResponse.isSuccess()) {
-                        Toast.makeText(RegisterActivity.this, apiResponse.getMessage(), Toast.LENGTH_SHORT).show();
+                        // Hiển thị thông báo dài hơn vì có hướng dẫn kích hoạt email
+                        Toast.makeText(RegisterActivity.this, apiResponse.getMessage(), Toast.LENGTH_LONG).show();
                         // Navigate back to login
                         finish();
                     } else {
                         Toast.makeText(RegisterActivity.this, apiResponse.getMessage(), Toast.LENGTH_SHORT).show();
                     }
                 } else {
-                    // Handle error response
+                    // Parse error body để lấy message từ server
                     String errorMessage = "Đăng ký thất bại";
                     if (response.errorBody() != null) {
                         try {
-                            // Có thể parse error body nếu cần
+                            Gson gson = new Gson();
+                            ApiResponse<?> errorResponse = gson.fromJson(
+                                response.errorBody().string(), 
+                                ApiResponse.class
+                            );
+                            if (errorResponse != null && errorResponse.getMessage() != null) {
+                                errorMessage = errorResponse.getMessage();
+                            } else {
+                                errorMessage = "Lỗi: " + response.code();
+                            }
+                        } catch (IOException e) {
                             errorMessage = "Lỗi: " + response.code();
                         } catch (Exception e) {
                             errorMessage = "Lỗi kết nối";
