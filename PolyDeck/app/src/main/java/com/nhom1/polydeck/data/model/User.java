@@ -12,29 +12,22 @@ public class User {
     @SerializedName("email")
     private String email;
 
-    @SerializedName("level")
+    @SerializedName("link_anh_dai_dien")
+    private String linkAnhDaiDien;
+
+    @SerializedName("cap_do")
     private int level;
 
-    @SerializedName("xp")
+    @SerializedName("diem_tich_luy")
     private int xp;
 
-    @SerializedName("ngay_tham_gia")
+    @SerializedName("ngay_tao")
     private String ngayThamGia;
 
     @SerializedName("trang_thai")
     private String trangThai;
 
     public User() {}
-
-    public User(String id, String hoTen, String email, int level, int xp, String ngayThamGia, String trangThai) {
-        this.id = id;
-        this.hoTen = hoTen;
-        this.email = email;
-        this.level = level;
-        this.xp = xp;
-        this.ngayThamGia = ngayThamGia;
-        this.trangThai = trangThai;
-    }
 
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
@@ -44,6 +37,9 @@ public class User {
 
     public String getEmail() { return email; }
     public void setEmail(String email) { this.email = email; }
+
+    public String getLinkAnhDaiDien() { return linkAnhDaiDien; }
+    public void setLinkAnhDaiDien(String linkAnhDaiDien) { this.linkAnhDaiDien = linkAnhDaiDien; }
 
     public int getLevel() { return level; }
     public void setLevel(int level) { this.level = level; }
@@ -63,10 +59,7 @@ public class User {
         if (words.length >= 2) {
             return (words[0].charAt(0) + "" + words[words.length - 1].charAt(0)).toUpperCase();
         }
-        return hoTen.substring(0, Math.min(2, hoTen.length())).toUpperCase();
-    }
-
-    public boolean isActive() {
-        return "Hoạt động".equals(trangThai);
+        if(hoTen.length() > 0) return hoTen.substring(0, 1).toUpperCase();
+        return "?";
     }
 }

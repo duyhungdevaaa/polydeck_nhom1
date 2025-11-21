@@ -1,32 +1,40 @@
 package com.nhom1.polydeck.ui.activity;
-import android.graphics.Color;
-import android.graphics.drawable.GradientDrawable;
+
 import android.os.Bundle;
-import android.view.View;
+import android.util.Log;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 
-
+import com.bumptech.glide.Glide;
 import com.nhom1.polydeck.R;
 import com.nhom1.polydeck.data.api.APIService;
 import com.nhom1.polydeck.data.api.RetrofitClient;
 import com.nhom1.polydeck.data.model.User;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
+
+import de.hdodenhof.circleimageview.CircleImageView;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
 public class UserDetailActivity extends AppCompatActivity {
 
-    private ImageView btnBack;
-    private TextView tvAvatar, tvUserNameTitle;
-    private EditText etFullName, etEmail, etLevel, etXP, etJoinDate;
-    private Button btnSave;
+    private static final String TAG = "UserDetailActivity";
+    public static final String EXTRA_USER_ID = "EXTRA_USER_ID";
+
+    private Toolbar toolbar;
+    private CircleImageView ivDetailAvatar;
+    private TextView tvDetailUserName;
+    private EditText etDetailFullName, etDetailEmail, etDetailLevel, etDetailXp, etDetailJoinDate;
+    private Button btnSaveChanges;
 
     private APIService apiService;
     private String userId;
@@ -37,111 +45,100 @@ public class UserDetailActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_user_detail);
 
-        userId = getIntent().getStringExtra("user_id");
+        userId = getIntent().getStringExtra(EXTRA_USER_ID);
+        if (userId == null || userId.isEmpty()) {
+            Toast.makeText(this, "User ID không hợp lệ", Toast.LENGTH_SHORT).show();
+            finish();
+            return;
+        }
 
+        apiService = RetrofitClient.getApiService();
         initViews();
-        setupAPI();
-        loadUserDetail();
+        setupToolbar();
+        fetchUserDetails();
+
+        btnSaveChanges.setOnClickListener(v -> saveUserChanges());
     }
 
     private void initViews() {
-        btnBack = findViewById(R.id.btnBack);
-        tvAvatar = findViewById(R.id.tvAvatar);
-        tvUserNameTitle = findViewById(R.id.tvUserNameTitle);
-        etFullName = findViewById(R.id.etFullName);
-        etEmail = findViewById(R.id.etEmail);
-        etLevel = findViewById(R.id.etLevel);
-        etXP = findViewById(R.id.etXP);
-        etJoinDate = findViewById(R.id.etJoinDate);
-        btnSave = findViewById(R.id.btnSave);
-
-        btnBack.setOnClickListener(v -> finish());
-        btnSave.setOnClickListener(v -> saveChanges());
+        toolbar = findViewById(R.id.toolbar_user_detail);
+        ivDetailAvatar = findViewById(R.id.ivDetailAvatar);
+        tvDetailUserName = findViewById(R.id.tvDetailUserName);
+        etDetailFullName = findViewById(R.id.etDetailFullName);
+        etDetailEmail = findViewById(R.id.etDetailEmail);
+        etDetailLevel = findViewById(R.id.etDetailLevel);
+        etDetailXp = findViewById(R.id.etDetailXp);
+        etDetailJoinDate = findViewById(R.id.etDetailJoinDate);
+        btnSaveChanges = findViewById(R.id.btnSaveChanges);
     }
 
-    private void setupAPI() {
-        apiService = RetrofitClient.getApiService();
+    private void setupToolbar() {
+        setSupportActionBar(toolbar);
+        if (getSupportActionBar() != null) {
+            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+            getSupportActionBar().setDisplayShowHomeEnabled(true);
+        }
+        toolbar.setNavigationOnClickListener(v -> onBackPressed());
     }
 
-    private void loadUserDetail() {
+    private void fetchUserDetails() {
         apiService.getUserDetail(userId).enqueue(new Callback<User>() {
             @Override
             public void onResponse(Call<User> call, Response<User> response) {
                 if (response.isSuccessful() && response.body() != null) {
                     currentUser = response.body();
-                    displayUserInfo();
+                    populateUserData(currentUser);
                 } else {
-                    Toast.makeText(UserDetailActivity.this,
-                            "Không thể tải thông tin người dùng", Toast.LENGTH_SHORT).show();
-                    finish();
+                    Toast.makeText(UserDetailActivity.this, "Không thể tải thông tin người dùng", Toast.LENGTH_SHORT).show();
                 }
             }
 
             @Override
             public void onFailure(Call<User> call, Throwable t) {
-                Toast.makeText(UserDetailActivity.this,
-                        "Lỗi: " + t.getMessage(), Toast.LENGTH_SHORT).show();
-                finish();
+                Log.e(TAG, "API Error: " + t.getMessage());
+                Toast.makeText(UserDetailActivity.this, "Lỗi mạng", Toast.LENGTH_SHORT).show();
             }
         });
     }
 
-    private void displayUserInfo() {
-        tvAvatar.setText(currentUser.getInitials());
-        GradientDrawable drawable = new GradientDrawable();
-        drawable.setShape(GradientDrawable.OVAL);
-        drawable.setColor(Color.parseColor("#7C3AED"));
-        tvAvatar.setBackground(drawable);
+    private void populateUserData(User user) {
+        Glide.with(this)
+                .load(user.getLinkAnhDaiDien())
+                .error(R.drawable.circle_purple) // Fallback image
+                .into(ivDetailAvatar);
 
-        tvUserNameTitle.setText(currentUser.getHoTen());
-        etFullName.setText(currentUser.getHoTen());
-        etEmail.setText(currentUser.getEmail());
-        etLevel.setText(String.valueOf(currentUser.getLevel()));
-        etXP.setText(String.valueOf(currentUser.getXp()));
-        etJoinDate.setText(currentUser.getNgayThamGia());
+        tvDetailUserName.setText(user.getHoTen());
+        etDetailFullName.setText(user.getHoTen());
+        etDetailEmail.setText(user.getEmail());
+        etDetailLevel.setText(String.valueOf(user.getLevel()));
+        etDetailXp.setText(String.valueOf(user.getXp()));
+        etDetailJoinDate.setText(user.getNgayThamGia());
     }
 
-    private void saveChanges() {
-        String hoTen = etFullName.getText().toString().trim();
-        String email = etEmail.getText().toString().trim();
-        String levelStr = etLevel.getText().toString().trim();
-        String xpStr = etXP.getText().toString().trim();
+    private void saveUserChanges() {
+        if (currentUser == null) return;
 
-        if (hoTen.isEmpty()) {
-            etFullName.setError("Vui lòng nhập họ tên");
-            return;
-        }
-
-        if (email.isEmpty()) {
-            etEmail.setError("Vui lòng nhập email");
-            return;
-        }
-
-        int level = levelStr.isEmpty() ? 0 : Integer.parseInt(levelStr);
-        int xp = xpStr.isEmpty() ? 0 : Integer.parseInt(xpStr);
-
-        currentUser.setHoTen(hoTen);
-        currentUser.setEmail(email);
-        currentUser.setLevel(level);
-        currentUser.setXp(xp);
+        // Update user object from EditText fields
+        currentUser.setHoTen(etDetailFullName.getText().toString());
+        currentUser.setEmail(etDetailEmail.getText().toString());
+        currentUser.setLevel(Integer.parseInt(etDetailLevel.getText().toString()));
+        currentUser.setXp(Integer.parseInt(etDetailXp.getText().toString()));
 
         apiService.updateUser(userId, currentUser).enqueue(new Callback<User>() {
             @Override
             public void onResponse(Call<User> call, Response<User> response) {
                 if (response.isSuccessful()) {
-                    Toast.makeText(UserDetailActivity.this,
-                            "Đã lưu thay đổi", Toast.LENGTH_SHORT).show();
-                    finish();
+                    Toast.makeText(UserDetailActivity.this, "Cập nhật thành công", Toast.LENGTH_SHORT).show();
+                    finish(); // Go back to the list
                 } else {
-                    Toast.makeText(UserDetailActivity.this,
-                            "Không thể lưu thay đổi", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(UserDetailActivity.this, "Cập nhật thất bại", Toast.LENGTH_SHORT).show();
                 }
             }
 
             @Override
             public void onFailure(Call<User> call, Throwable t) {
-                Toast.makeText(UserDetailActivity.this,
-                        "Lỗi: " + t.getMessage(), Toast.LENGTH_SHORT).show();
+                Log.e(TAG, "API Error: " + t.getMessage());
+                Toast.makeText(UserDetailActivity.this, "Lỗi mạng", Toast.LENGTH_SHORT).show();
             }
         });
     }

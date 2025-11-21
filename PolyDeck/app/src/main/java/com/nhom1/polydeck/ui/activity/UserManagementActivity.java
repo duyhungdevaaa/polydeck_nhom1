@@ -1,17 +1,16 @@
 package com.nhom1.polydeck.ui.activity;
 
-import android.content.Intent;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.view.View;
+import android.util.Log;
 import android.widget.EditText;
-import android.widget.ImageView;
-import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -28,112 +27,91 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-public class UserManagementActivity extends AppCompatActivity implements UserAdapter.OnUserClickListener {
+// FIX: Implement the callback interface from the adapter
+public class UserManagementActivity extends AppCompatActivity implements UserAdapter.OnUserStatusChangedListener {
 
-    private ImageView btnBack;
-    private EditText etSearch;
-    private TextView tvTotalCount, tvActiveCount, tvBlockedCount;
+    private static final String TAG = "UserManagementActivity";
+
+    private Toolbar toolbar;
+    private EditText etSearchUser;
     private RecyclerView rvUsers;
-    private ProgressBar progressBar;
-
+    private TextView tvTotalUsers, tvBannedUsers;
     private UserAdapter userAdapter;
-    private List<User> userList = new ArrayList<>();
-    private List<User> filteredList = new ArrayList<>();
-
     private APIService apiService;
+    private List<User> fullUserList = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_user_management);
 
+        apiService = RetrofitClient.getApiService();
         initViews();
+        setupToolbar();
         setupRecyclerView();
-        setupAPI();
-        loadUsers();
-        setupSearchListener();
+        setupSearch();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        fetchUsers();
     }
 
     private void initViews() {
-        btnBack = findViewById(R.id.btnBack);
-        etSearch = findViewById(R.id.etSearch);
-        tvTotalCount = findViewById(R.id.tvTotalCount);
-        tvActiveCount = findViewById(R.id.tvActiveCount);
-        tvBlockedCount = findViewById(R.id.tvBlockedCount);
+        toolbar = findViewById(R.id.toolbar);
+        etSearchUser = findViewById(R.id.etSearchUser);
         rvUsers = findViewById(R.id.rvUsers);
-        progressBar = findViewById(R.id.progressBar);
+        tvTotalUsers = findViewById(R.id.tvTotalUsers);
+        tvBannedUsers = findViewById(R.id.tvBannedUsers);
+    }
 
-        btnBack.setOnClickListener(v -> finish());
+    private void setupToolbar() {
+        setSupportActionBar(toolbar);
+        if (getSupportActionBar() != null) {
+            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+            getSupportActionBar().setDisplayShowHomeEnabled(true);
+        }
+        toolbar.setNavigationOnClickListener(v -> onBackPressed());
     }
 
     private void setupRecyclerView() {
-        userAdapter = new UserAdapter(this, filteredList, this);
         rvUsers.setLayoutManager(new LinearLayoutManager(this));
+        // Pass 'this' as the listener
+        userAdapter = new UserAdapter(this, new ArrayList<>());
         rvUsers.setAdapter(userAdapter);
     }
 
-    private void setupAPI() {
-        apiService = RetrofitClient.getApiService();
-    }
-
-    private void loadUsers() {
-        showLoading(true);
-
+    private void fetchUsers() {
         apiService.getAllUsers().enqueue(new Callback<List<User>>() {
             @Override
-            public void onResponse(Call<List<User>> call, Response<List<User>> response) {
-                showLoading(false);
-
+            public void onResponse(@NonNull Call<List<User>> call, @NonNull Response<List<User>> response) {
                 if (response.isSuccessful() && response.body() != null) {
-                    userList.clear();
-                    userList.addAll(response.body());
-
-                    filteredList.clear();
-                    filteredList.addAll(userList);
-
-                    userAdapter.notifyDataSetChanged();
+                    fullUserList.clear();
+                    fullUserList.addAll(response.body());
+                    userAdapter.updateData(new ArrayList<>(fullUserList));
                     updateStats();
                 } else {
-                    Toast.makeText(UserManagementActivity.this,
-                            "Không thể tải danh sách người dùng", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(UserManagementActivity.this, "Failed to load users", Toast.LENGTH_SHORT).show();
                 }
             }
 
             @Override
-            public void onFailure(Call<List<User>> call, Throwable t) {
-                showLoading(false);
-                Toast.makeText(UserManagementActivity.this,
-                        "Lỗi: " + t.getMessage(), Toast.LENGTH_SHORT).show();
+            public void onFailure(@NonNull Call<List<User>> call, @NonNull Throwable t) {
+                Log.e(TAG, "API call failed: " + t.getMessage());
+                Toast.makeText(UserManagementActivity.this, "Error: " + t.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });
     }
 
-    private void updateStats() {
-        int total = userList.size();
-        int active = 0;
-        int blocked = 0;
-
-        for (User user : userList) {
-            if (user.isActive()) {
-                active++;
-            } else {
-                blocked++;
-            }
-        }
-
-        tvTotalCount.setText(String.format("%,d", total));
-        tvActiveCount.setText(String.format("%,d", active));
-        tvBlockedCount.setText(String.format("%,d", blocked));
-    }
-
-    private void setupSearchListener() {
-        etSearch.addTextChangedListener(new TextWatcher() {
+    private void setupSearch() {
+        etSearchUser.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
-                filterUsers(s.toString());
+                searchUsers(s.toString());
             }
 
             @Override
@@ -141,92 +119,30 @@ public class UserManagementActivity extends AppCompatActivity implements UserAda
         });
     }
 
-    private void filterUsers(String query) {
-        filteredList.clear();
-
-        if (query.isEmpty()) {
-            filteredList.addAll(userList);
-        } else {
-            String searchQuery = query.toLowerCase().trim();
-            for (User user : userList) {
-                if (user.getHoTen().toLowerCase().contains(searchQuery) ||
-                        user.getEmail().toLowerCase().contains(searchQuery)) {
-                    filteredList.add(user);
-                }
+    private void searchUsers(String query) {
+        if (query == null || query.trim().isEmpty()) {
+            userAdapter.updateData(new ArrayList<>(fullUserList));
+            return;
+        }
+        List<User> filteredList = new ArrayList<>();
+        for (User user : fullUserList) {
+            if (user.getHoTen().toLowerCase().contains(query.toLowerCase()) || user.getEmail().toLowerCase().contains(query.toLowerCase())) {
+                filteredList.add(user);
             }
         }
-
-        userAdapter.notifyDataSetChanged();
+        userAdapter.updateData(filteredList);
     }
 
-    private void showLoading(boolean show) {
-        progressBar.setVisibility(show ? View.VISIBLE : View.GONE);
-        rvUsers.setVisibility(show ? View.GONE : View.VISIBLE);
+    public void updateStats() {
+        long activeCount = fullUserList.stream().filter(u -> "active".equalsIgnoreCase(u.getTrangThai())).count();
+        long bannedCount = fullUserList.stream().filter(u -> "banned".equalsIgnoreCase(u.getTrangThai())).count();
+        tvTotalUsers.setText(String.format("%d Hoạt động", activeCount));
+        tvBannedUsers.setText(String.format("%d Bị khóa", bannedCount));
     }
 
+    // FIX: Implement the method from the interface to update stats
     @Override
-    public void onDetailClick(User user) {
-        Intent intent = new Intent(this, UserDetailActivity.class);
-        intent.putExtra("user_id", user.getId());
-        startActivity(intent);
-    }
-
-    @Override
-    public void onBlockClick(User user) {
-        if (user.isActive()) {
-            blockUser(user);
-        } else {
-            unblockUser(user);
-        }
-    }
-
-    private void blockUser(User user) {
-        apiService.blockUser(user.getId()).enqueue(new Callback<Void>() {
-            @Override
-            public void onResponse(Call<Void> call, Response<Void> response) {
-                if (response.isSuccessful()) {
-                    Toast.makeText(UserManagementActivity.this,
-                            "Đã khóa tài khoản", Toast.LENGTH_SHORT).show();
-                    loadUsers(); // Reload danh sách
-                } else {
-                    Toast.makeText(UserManagementActivity.this,
-                            "Không thể khóa tài khoản", Toast.LENGTH_SHORT).show();
-                }
-            }
-
-            @Override
-            public void onFailure(Call<Void> call, Throwable t) {
-                Toast.makeText(UserManagementActivity.this,
-                        "Lỗi: " + t.getMessage(), Toast.LENGTH_SHORT).show();
-            }
-        });
-    }
-
-    private void unblockUser(User user) {
-        apiService.unblockUser(user.getId()).enqueue(new Callback<Void>() {
-            @Override
-            public void onResponse(Call<Void> call, Response<Void> response) {
-                if (response.isSuccessful()) {
-                    Toast.makeText(UserManagementActivity.this,
-                            "Đã mở khóa tài khoản", Toast.LENGTH_SHORT).show();
-                    loadUsers(); // Reload danh sách
-                } else {
-                    Toast.makeText(UserManagementActivity.this,
-                            "Không thể mở khóa tài khoản", Toast.LENGTH_SHORT).show();
-                }
-            }
-
-            @Override
-            public void onFailure(Call<Void> call, Throwable t) {
-                Toast.makeText(UserManagementActivity.this,
-                        "Lỗi: " + t.getMessage(), Toast.LENGTH_SHORT).show();
-            }
-        });
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-        loadUsers();
+    public void onStatusChanged() {
+        updateStats();
     }
 }

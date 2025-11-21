@@ -1,120 +1,165 @@
 package com.nhom1.polydeck.ui.adapter;
 
 import android.content.Context;
-import android.graphics.Color;
-import android.graphics.drawable.GradientDrawable;
+import android.content.DialogInterface;
+import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
+import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
-
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.request.RequestOptions;
 import com.nhom1.polydeck.R;
+import com.nhom1.polydeck.data.api.APIService;
+import com.nhom1.polydeck.data.api.RetrofitClient;
 import com.nhom1.polydeck.data.model.User;
+import com.nhom1.polydeck.ui.activity.UserDetailActivity;
 
 import java.util.List;
-import java.util.Random;
+import java.util.Locale;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class UserAdapter extends RecyclerView.Adapter<UserAdapter.UserViewHolder> {
 
-    private Context context;
-    private List<User> userList;
-    private OnUserClickListener listener;
-
-    private static final String[] AVATAR_COLORS = {
-            "#7C3AED", "#3B82F6", "#10B981", "#F59E0B", "#EF4444", "#8B5CF6"
-    };
-
-    public interface OnUserClickListener {
-        void onDetailClick(User user);
-
-        void onBlockClick(User user);
+    // FIX: Add callback interface
+    public interface OnUserStatusChangedListener {
+        void onStatusChanged();
     }
 
-    public UserAdapter(Context context, List<User> userList, OnUserClickListener listener) {
+    private final List<User> userList;
+    private final Context context;
+    private final APIService apiService;
+    private OnUserStatusChangedListener statusChangedListener;
+
+    public UserAdapter(Context context, List<User> userList) {
         this.context = context;
         this.userList = userList;
-        this.listener = listener;
+        this.apiService = RetrofitClient.getApiService();
+        // Try to cast context to listener
+        if (context instanceof OnUserStatusChangedListener) {
+            this.statusChangedListener = (OnUserStatusChangedListener) context;
+        }
     }
 
     @NonNull
     @Override
     public UserViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(context).inflate(R.layout.item_user, parent, false);
+        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_user, parent, false);
         return new UserViewHolder(view);
     }
 
     @Override
     public void onBindViewHolder(@NonNull UserViewHolder holder, int position) {
         User user = userList.get(position);
-
-        holder.tvAvatar.setText(user.getInitials());
-        setAvatarColor(holder.tvAvatar, position);
+        if (user == null) return;
 
         holder.tvUserName.setText(user.getHoTen());
         holder.tvEmail.setText(user.getEmail());
-        holder.tvUserInfo.setText(String.format("Level %d • %d XP • %s",
-                user.getLevel(), user.getXp(), user.getNgayThamGia()));
+        holder.tvUserInfo.setText(String.format(Locale.getDefault(), "Level %d • %d XP", user.getLevel(), user.getXp()));
 
-        if (user.isActive()) {
-            holder.tvStatus.setText("Hoạt động");
-            holder.tvStatus.setTextColor(Color.parseColor("#10B981"));
-            holder.tvStatus.setBackgroundResource(R.drawable.bg_status_active);
-            holder.btnBlock.setText("Khóa");
-            holder.btnBlock.setBackgroundResource(R.drawable.bg_button_outline_red);
-            holder.btnBlock.setTextColor(Color.parseColor("#EF4444"));
-        } else {
-            holder.tvStatus.setText("Bị khóa");
-            holder.tvStatus.setTextColor(Color.parseColor("#EF4444"));
-            holder.tvStatus.setBackgroundResource(R.drawable.bg_status_blocked);
-            holder.btnBlock.setText("Mở khóa");
-            holder.btnBlock.setBackgroundResource(R.drawable.bg_button_outline_green);
-            holder.btnBlock.setTextColor(Color.parseColor("#10B981"));
-        }
+        Glide.with(context)
+                .load(user.getLinkAnhDaiDien())
+                .apply(RequestOptions.circleCropTransform())
+                .placeholder(R.drawable.circle_purple)
+                .error(R.drawable.circle_purple)
+                .into(holder.ivAvatar);
+
+        updateStatusUI(holder, user);
 
         holder.btnDetail.setOnClickListener(v -> {
-            if (listener != null) {
-                listener.onDetailClick(user);
-            }
+            Intent intent = new Intent(context, UserDetailActivity.class);
+            intent.putExtra(UserDetailActivity.EXTRA_USER_ID, user.getId());
+            context.startActivity(intent);
         });
 
-        holder.btnBlock.setOnClickListener(v -> {
-            if (listener != null) {
-                listener.onBlockClick(user);
+        holder.btnBlock.setOnClickListener(v -> showBlockConfirmationDialog(user, holder));
+    }
+
+    private void showBlockConfirmationDialog(User user, UserViewHolder holder) {
+        String action = "active".equals(user.getTrangThai()) ? "khóa" : "mở khóa";
+        new AlertDialog.Builder(context)
+                .setTitle("Xác nhận")
+                .setMessage("Bạn có chắc chắn muốn " + action + " tài khoản '" + user.getHoTen() + "'?")
+                .setPositiveButton(action.toUpperCase(), (dialog, which) -> toggleBlockStatus(user, holder))
+                .setNegativeButton("Hủy", null)
+                .show();
+    }
+
+    private void toggleBlockStatus(User user, UserViewHolder holder) {
+        apiService.blockUser(user.getId()).enqueue(new Callback<Void>() {
+            @Override
+            public void onResponse(@NonNull Call<Void> call, @NonNull Response<Void> response) {
+                if (response.isSuccessful()) {
+                    user.setTrangThai("active".equals(user.getTrangThai()) ? "banned" : "active");
+                    updateStatusUI(holder, user);
+                    Toast.makeText(context, "Cập nhật trạng thái thành công", Toast.LENGTH_SHORT).show();
+                    // FIX: Notify the activity that the status has changed
+                    if (statusChangedListener != null) {
+                        statusChangedListener.onStatusChanged();
+                    }
+                } else {
+                    Toast.makeText(context, "Cập nhật thất bại", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<Void> call, @NonNull Throwable t) {
+                Toast.makeText(context, "Lỗi: " + t.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });
     }
+
+    private void updateStatusUI(UserViewHolder holder, User user) {
+        if ("active".equalsIgnoreCase(user.getTrangThai())) {
+            holder.tvStatus.setText(R.string.status_active);
+            holder.tvStatus.setTextColor(ContextCompat.getColor(context, R.color.status_active_text));
+            holder.tvStatus.setBackgroundResource(R.drawable.bg_status_active);
+            holder.btnBlock.setText("Khóa");
+        } else {
+            holder.tvStatus.setText(R.string.status_banned);
+            holder.tvStatus.setTextColor(ContextCompat.getColor(context, R.color.status_banned_text));
+            holder.tvStatus.setBackgroundResource(R.drawable.bg_status_banned);
+            holder.btnBlock.setText("Mở khóa");
+        }
+    }
+
 
     @Override
     public int getItemCount() {
-        return userList.size();
+        return userList != null ? userList.size() : 0;
     }
 
-    private void setAvatarColor(TextView textView, int position) {
-        String color = AVATAR_COLORS[position % AVATAR_COLORS.length];
-        GradientDrawable drawable = new GradientDrawable();
-        drawable.setShape(GradientDrawable.OVAL);
-        drawable.setColor(Color.parseColor(color));
-        textView.setBackground(drawable);
+    public void updateData(List<User> newList) {
+        userList.clear();
+        userList.addAll(newList);
+        notifyDataSetChanged();
     }
 
-    public static class UserViewHolder extends RecyclerView.ViewHolder {
-        TextView tvAvatar, tvUserName, tvEmail, tvUserInfo, tvStatus;
+    static class UserViewHolder extends RecyclerView.ViewHolder {
+        ImageView ivAvatar;
+        TextView tvUserName, tvEmail, tvStatus, tvUserInfo;
         Button btnDetail, btnBlock;
         ImageView btnMore;
 
         public UserViewHolder(@NonNull View itemView) {
             super(itemView);
-            tvAvatar = itemView.findViewById(R.id.tvAvatar);
+            ivAvatar = itemView.findViewById(R.id.ivAvatar);
             tvUserName = itemView.findViewById(R.id.tvUserName);
             tvEmail = itemView.findViewById(R.id.tvEmail);
-            tvUserInfo = itemView.findViewById(R.id.tvUserInfo);
             tvStatus = itemView.findViewById(R.id.tvStatus);
+            tvUserInfo = itemView.findViewById(R.id.tvUserInfo);
             btnDetail = itemView.findViewById(R.id.btnDetail);
             btnBlock = itemView.findViewById(R.id.btnBlock);
             btnMore = itemView.findViewById(R.id.btnMore);
