@@ -16,29 +16,31 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.PolyDeck"
         android:usesCleartextTraffic="true">
-        <activity
-            android:name=".ui.activity.ForgotPasswordActivity"
-            android:exported="false" />
-        <activity
-            android:name=".ui.activity.RegisterActivity"
-            android:exported="false" />
-        <activity
-            android:name=".ui.activity.AdminDashboardActivity"
-            android:exported="false" />
+
+        <!-- Main and Auth Activities -->
         <activity
             android:name=".ui.activity.WelcomeActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
         <activity
             android:name=".ui.activity.LoginActivity"
             android:exported="true"
-            android:screenOrientation="portrait"
             android:theme="@style/Theme.PolyDeck" />
+        <activity
+            android:name=".ui.activity.RegisterActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.activity.ForgotPasswordActivity"
+            android:exported="false" />
+
+        <!-- Admin Panel Activities -->
+        <activity
+            android:name=".ui.activity.AdminPanelActivity"
+            android:exported="false" />
         <activity
             android:name=".ui.activity.UserManagementActivity"
             android:theme="@style/Theme.PolyDeck" />
@@ -49,11 +51,24 @@
             android:name=".ui.activity.DeckManagementActivity"
             android:theme="@style/Theme.PolyDeck" />
         <activity
-            android:name=".ui.activity.CreateDeckActivity"
+            android:name=".ui.activity.AddDeckActivity"
+            android:theme="@style/Theme.PolyDeck" />
+        <activity
+            android:name=".ui.activity.EditDeckActivity"
             android:theme="@style/Theme.PolyDeck" />
         <activity
             android:name=".ui.activity.AddVocabularyActivity"
             android:theme="@style/Theme.PolyDeck" />
+        <activity
+            android:name=".ui.activity.SendNotificationActivity"
+            android:theme="@style/Theme.PolyDeck" />
+        <activity
+            android:name=".ui.activity.CreateQuizActivity"
+            android:theme="@style/Theme.PolyDeck" />
+        <activity
+            android:name=".ui.activity.VocabularyListActivity"
+            android:theme="@style/Theme.PolyDeck" />
+
     </application>
 
 </manifest>

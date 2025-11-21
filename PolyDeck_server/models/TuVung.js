@@ -5,6 +5,7 @@ const tuVungSchema = new mongoose.Schema({
   ma_chu_de: { type: String, required: true, trim: true },
   tu_tieng_anh: { type: String, required: true, trim: true },
   phien_am: { type: String, default: null },
+  link_anh: { type: String, default: null },
   cau_vi_du: { type: String, default: null },
   am_thanh: { type: String, default: null },
   nghia_tieng_viet: { type: String, required: true, trim: true }
@@ -13,7 +14,6 @@ const tuVungSchema = new mongoose.Schema({
   collection: 'tu_vung'
 });
 
-tuVungSchema.index({ ma_tu_vung: 1 });
 tuVungSchema.index({ ma_chu_de: 1 });
 tuVungSchema.index({ tu_tieng_anh: 1 });
 

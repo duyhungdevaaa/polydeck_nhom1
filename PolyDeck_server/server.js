@@ -1,69 +1,172 @@
 const express = require('express');
 const cors = require('cors');
 const connectDB = require('./config/database');
+const bcrypt = require('bcryptjs');
+const NguoiDung = require('./models/NguoiDung');
 require('dotenv').config();
+const { execSync } = require('child_process');
 
 const app = express();
 
-// Middleware
-app.use(cors());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-
-// Import models để đảm bảo chúng được load
-require('./models/ChuDe');
-require('./models/TuVung');
-require('./models/NguoiDung');
-require('./models/TienDoHocTap');
-require('./models/BaiQuiz');
-require('./models/CauHoi');
-require('./models/LichSuLamBai');
-require('./models/ThongBao');
-require('./models/YeuCauHoTro');
-
-// Import middleware
-// const errorHandler = require('./middleware/errorHandler');
-// const authMiddleware = require('./middleware/auth');
-
-// Routes
-app.get('/', (req, res) => {
-  res.json({ message: 'PolyDeck API Server is running!' });
+// Simple request logger to help debug requests coming from mobile
+app.use((req, res, next) => {
+  try {
+    const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || req.ip;
+    console.log(`${new Date().toISOString()} - ${req.method} ${req.originalUrl} - from ${ip}`);
+  } catch (e) {}
+  next();
 });
 
-// Routes
-app.use('/api/auth', require('./routes/auth'));
-// app.use('/api/chu-de', require('./routes/chuDe'));
-// app.use('/api/tu-vung', require('./routes/tuVung'));
-// app.use('/api/quiz', require('./routes/quiz'));
-// app.use('/api/nguoi-dung', require('./routes/nguoiDung'));
-// app.use('/api/thong-bao', require('./routes/thongBao'));
-// app.use('/api/ho-tro', require('./routes/hoTro'));
-// app.use('/api/admin', require('./routes/admin'));
-
-// Error handler middleware (đặt cuối cùng)
-// app.use(errorHandler);
-
-const PORT = process.env.PORT || 3000;
-
-// Khởi động server sau khi kết nối database
-const startServer = async () => {
+const createDefaultAdmin = async () => {
   try {
-    // Connect to MongoDB và tạo database/collections
-    await connectDB();
-    
-    // Start server
-    app.listen(PORT, () => {
-      console.log('═══════════════════════════════════════');
-      console.log(`✓ Server đang chạy trên port ${PORT}`);
-      console.log(`✓ API: http://localhost:${PORT}`);
-      console.log('═══════════════════════════════════════');
-      console.log('');
-    });
+    const adminEmail = 'admin@polydeck.com';
+    const adminPassword = 'admin123';
+
+    const existingAdmin = await NguoiDung.findOne({ email: adminEmail });
+
+    if (!existingAdmin) {
+      console.log('Tài khoản Admin mặc định không tồn tại. Đang tạo...');
+      const salt = await bcrypt.genSalt(10);
+      const hashedPassword = await bcrypt.hash(adminPassword, salt);
+
+      const adminUser = new NguoiDung({
+        ma_nguoi_dung: `ADMIN_${Date.now()}`,
+        ho_ten: 'PolyDeck Admin',
+        email: adminEmail,
+        mat_khau_hash: hashedPassword, 
+        vai_tro: 'admin',
+        trang_thai: 'active'
+      });
+
+      await adminUser.save();
+      console.log('✓ Tài khoản Admin mặc định đã được tạo thành công.');
+      console.log(`  => Email: ${adminEmail}`);
+      console.log(`  => Mật khẩu: ${adminPassword}`);
+    }
   } catch (error) {
-    console.error('Failed to start server:', error);
+    console.error('Lỗi khi tạo tài khoản Admin mặc định:', error.message);
+  }
+};
+
+app.use(cors()); 
+app.use(express.json()); 
+app.use(express.urlencoded({ extended: true }));
+
+app.use(express.static('public'));
+
+app.use('/api/auth', require('./routes/auth'));
+app.use('/api/users', require('./routes/nguoiDung'));      
+app.use('/api/chude', require('./routes/chuDe'));         
+app.use('/api/admin', require('./routes/admin'));
+
+// Debug/info endpoint: returns machine LAN IPs to help mobile testing
+app.get('/api/info', (req, res) => {
+  try {
+    const os = require('os');
+    const ifaces = os.networkInterfaces();
+    const ips = [];
+    Object.keys(ifaces).forEach(ifname => {
+      for (const iface of ifaces[ifname]) {
+        if (iface.family === 'IPv4' && !iface.internal) {
+          ips.push({ iface: ifname, address: iface.address });
+        }
+      }
+    });
+    res.json({ host: req.hostname, ips });
+  } catch (e) {
+    res.json({ error: e.message });
+  }
+});
+// app.use('/api/tuvung', require('./routes/tuVung'));      
+// app.use('/api/quizzes', require('./routes/quiz'));        
+// app.use('/api/hotro', require('./routes/hoTro'));         
+// app.use('/api/thongbao', require('./routes/thongBao'));   
+
+const DEFAULT_PORT = parseInt(process.env.PORT, 10) || 3000;
+
+// Try to start server on DEFAULT_PORT, if it's in use try next ports up to a limit
+const startServer = async (port = DEFAULT_PORT, maxAttempts = 10) => {
+  try {
+    await connectDB();
+    await createDefaultAdmin();
+
+    const attemptListen = (p, attemptsLeft) => {
+      const server = app.listen(p, '0.0.0.0')
+        .on('listening', () => {
+          console.log('═══════════════════════════════════════');
+          console.log(`✓ Server đang chạy trên port ${p}`);
+          console.log(`✓ API: http://localhost:${p}`);
+          try {
+            const os = require('os');
+            const ifaces = os.networkInterfaces();
+            Object.keys(ifaces).forEach(ifname => {
+              for (const iface of ifaces[ifname]) {
+                if (iface.family === 'IPv4' && !iface.internal) {
+                  console.log(`  => LAN: http://${iface.address}:${p}`);
+                }
+              }
+            });
+          } catch (e) {}
+          console.log('═══════════════════════════════════════');
+        })
+        .on('error', (err) => {
+          if (err.code === 'EADDRINUSE' && attemptsLeft > 0) {
+            // If initial requested port (DEFAULT_PORT) is in use, try to free it on Windows by
+            // finding the PID and killing it. This helps ensure the server runs on port 3000.
+            if (p === DEFAULT_PORT) {
+              try {
+                console.warn(`Port ${p} is in use. Attempting to find and kill owning process...`);
+                const cmd = `netstat -ano | findstr :${p}`;
+                const out = execSync(cmd, { encoding: 'utf8' });
+                // Parse PID from output (last column)
+                const lines = out.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+                for (const line of lines) {
+                  const parts = line.split(/\s+/);
+                  const pid = parts[parts.length - 1];
+                  if (pid && !isNaN(pid)) {
+                    try {
+                      console.warn(`Killing PID ${pid} that is using port ${p}...`);
+                      execSync(`taskkill /PID ${pid} /F`);
+                      console.warn(`PID ${pid} killed.`);
+                    } catch (killErr) {
+                      console.error('Không thể kill PID:', pid, killErr.message);
+                    }
+                  }
+                }
+              } catch (findErr) {
+                console.error('Không tìm thấy tiến trình dùng port hoặc lỗi khi chạy netstat:', findErr.message);
+              }
+            }
+
+            console.warn(`Port ${p} is in use, trying port ${p + 1}...`);
+            setTimeout(() => attemptListen(p + 1, attemptsLeft - 1), 200);
+          } else {
+            console.error('Lỗi khi lắng nghe cổng:', err);
+            process.exit(1);
+          }
+        });
+    };
+
+    attemptListen(port, maxAttempts);
+
+    // Graceful shutdown handlers
+    const shutdown = () => {
+      console.log('Shutting down server...');
+      process.exit(0);
+    };
+    process.on('SIGINT', shutdown);
+    process.on('SIGTERM', shutdown);
+    process.on('unhandledRejection', (reason) => {
+      console.error('Unhandled Rejection:', reason);
+    });
+    process.on('uncaughtException', (err) => {
+      console.error('Uncaught Exception:', err);
+    });
+
+  } catch (error) {
+    console.error('Lỗi không thể khởi động server:', error);
     process.exit(1);
   }
 };
 
 startServer();
-

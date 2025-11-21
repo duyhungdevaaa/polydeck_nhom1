@@ -8,4 +8,10 @@
     <color name="gray_medium">#9CA3AF</color>
     <color name="gray_dark">#1F2937</color>
     <color name="gray_background">#E5E7EB</color>
+    
+    <!-- Status Colors -->
+    <color name="status_active_bg">#D1FAE5</color>
+    <color name="status_active_text">#065F46</color>
+    <color name="status_banned_bg">#FEE2E2</color>
+    <color name="status_banned_text">#991B1B</color>
 </resources>

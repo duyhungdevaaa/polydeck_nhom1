@@ -1,0 +1,114 @@
+<resources xmlns:app="http://schemas.android.com/apk/res-auto">
+    <!-- Base application theme. -->
+    <style name="AppTheme" parent="Theme.AppCompat.Light.NoActionBar">
+        <!-- Customize your theme here. -->
+    </style>
+
+    <!-- Style for Admin Panel Stat Cards -->
+    <style name="AdminStatCard" parent="Widget.MaterialComponents.CardView">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_columnWeight">1</item>
+        <item name="cardCornerRadius">12dp</item>
+        <item name="cardElevation">2dp</item>
+    </style>
+
+    <style name="AdminStatCard.Content" parent="">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:orientation">vertical</item>
+        <item name="android:padding">16dp</item>
+    </style>
+
+    <style name="AdminStatCard.Value" parent="">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:textSize">22sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textColor">#1F2937</item>
+    </style>
+
+    <style name="AdminStatCard.Label" parent="">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:textSize">14sp</item>
+        <item name="android:textColor">#6B7280</item>
+        <item name="android:layout_marginTop">4dp</item>
+    </style>
+
+    <!-- Style for Admin Panel Menu Cards -->
+    <style name="AdminMenuCard" parent="Widget.MaterialComponents.CardView">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_columnWeight">1</item>
+        <item name="cardCornerRadius">12dp</item>
+        <item name="cardElevation">2dp</item>
+        <item name="android:clickable">true</item>
+        <item name="android:focusable">true</item>
+        <item name="android:foreground">?android:attr/selectableItemBackground</item>
+    </style>
+
+    <style name="AdminMenuCard.Content" parent="">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:orientation">vertical</item>
+        <item name="android:padding">16dp</item>
+        <item name="android:gravity">center</item>
+    </style>
+
+    <style name="AdminMenuCard.Icon" parent="">
+        <item name="android:layout_width">40dp</item>
+        <item name="android:layout_height">40dp</item>
+        <item name="android:tint">#4C1D95</item> <!-- FIX: Changed to android:tint -->
+    </style>
+
+    <style name="AdminMenuCard.Text" parent="">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginTop">8dp</item>
+        <item name="android:textColor">#1F2937</item>
+    </style>
+    
+    <!-- Styles for User Detail Screen -->
+    <style name="UserDetailLabel" parent="">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginTop">20dp</item>
+        <item name="android:textColor">#6B7280</item>
+        <item name="android:textSize">14sp</item>
+    </style>
+
+    <style name="UserDetailEditText" parent="Widget.AppCompat.EditText">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:background">@drawable/bg_search_edit_text</item>
+        <item name="android:padding">12dp</item>
+        <item name="android:layout_marginTop">8dp</item>
+        <item name="android:textColor">#1F2937</item>
+        <item name="android:textSize">16sp</item>
+    </style>
+
+    <!-- Styles for Create Quiz Screen -->
+    <style name="AnswerOptionLayout" parent="">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:orientation">horizontal</item>
+        <item name="android:gravity">center_vertical</item>
+        <item name="android:layout_marginTop">8dp</item>
+    </style>
+
+    <style name="AnswerRadioButton" parent="Widget.AppCompat.CompoundButton.RadioButton"> <!-- FIX: Corrected parent style -->
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+    </style>
+
+    <style name="AnswerEditText" parent="Widget.AppCompat.EditText">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:background">@null</item>
+        <item name="android:paddingStart">8dp</item>
+        <item name="android:paddingEnd">8dp</item>
+    </style>
+
+</resources>

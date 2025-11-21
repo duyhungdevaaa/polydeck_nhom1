@@ -1,164 +1,73 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="#F5F5F5">
+    android:background="#F9FAFB"
+    tools:context=".ui.activity.DeckManagementActivity">
 
-    <androidx.cardview.widget.CardView
+    <com.google.android.material.appbar.AppBarLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:cardElevation="4dp"
-        app:cardCornerRadius="0dp">
+        android:background="@android:color/white">
 
-        <LinearLayout
+        <androidx.appcompat.widget.Toolbar
+            android:id="@+id/toolbar_deck_management"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
-            android:orientation="horizontal"
-            android:gravity="center_vertical"
-            android:paddingHorizontal="16dp"
-            android:background="@android:color/white">
+            app:title="Quản lý bộ từ"
+            app:navigationIcon="@drawable/ic_arrow_back" />
 
-            <ImageView
-                android:id="@+id/btnBack"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:src="@drawable/ic_back"
-                android:padding="10dp"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                app:tint="#1F2937"/>
+    </com.google.android.material.appbar.AppBarLayout>
 
-            <TextView
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="Quản lý bộ từ"
-                android:textColor="#1F2937"
-                android:textSize="18sp"
-                android:textStyle="bold"
-                android:layout_marginStart="8dp"/>
-
-            <ImageView
-                android:id="@+id/btnAdd"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:src="@drawable/ic_add"
-                android:padding="8dp"
-                android:background="@drawable/circle_blue"
-                app:tint="@android:color/white"/>
-        </LinearLayout>
-    </androidx.cardview.widget.CardView>
-
-    <androidx.cardview.widget.CardView
+    <androidx.coordinatorlayout.widget.CoordinatorLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_margin="16dp"
-        app:cardCornerRadius="12dp"
-        app:cardElevation="2dp">
+        android:layout_height="match_parent">
 
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical"
-            android:padding="12dp"
-            android:background="@android:color/white">
-
-            <ImageView
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:src="@drawable/ic_search"
-                app:tint="#9CA3AF"/>
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:padding="16dp">
 
             <EditText
-                android:id="@+id/etSearch"
-                android:layout_width="0dp"
+                android:id="@+id/etSearchDeck"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
                 android:hint="Tìm kiếm bộ từ..."
-                android:textSize="14sp"
-                android:textColor="#1F2937"
-                android:textColorHint="#9CA3AF"
-                android:background="@android:color/transparent"
-                android:paddingHorizontal="12dp"
-                android:paddingVertical="4dp"
-                android:inputType="text"
-                android:imeOptions="actionSearch"/>
+                android:background="@drawable/bg_search_edit_text"
+                android:padding="12dp"
+                android:drawableStart="@drawable/ic_search"
+                android:drawablePadding="8dp"/>
+
+            <TextView
+                android:id="@+id/tvDeckStats"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="156 Tổng bộ từ • 142 Đã xuất bản" />
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rvDecks"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:layout_marginTop="16dp"
+                tools:listitem="@layout/item_deck" />
         </LinearLayout>
-    </androidx.cardview.widget.CardView>
 
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:paddingHorizontal="16dp"
-        android:paddingBottom="16dp">
-
-        <LinearLayout
-            android:layout_width="0dp"
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/fabAddDeck"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:orientation="vertical"
-            android:gravity="center">
+            android:layout_gravity="bottom|end"
+            android:layout_margin="16dp"
+            android:src="@drawable/ic_add"
+            app:tint="@android:color/white"
+            android:contentDescription="Tạo bộ từ mới"/>
 
-            <TextView
-                android:id="@+id/tvTotalDecks"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="156"
-                android:textColor="#1F2937"
-                android:textSize="20sp"
-                android:textStyle="bold"/>
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Tổng bộ từ"
-                android:textColor="#6B7280"
-                android:textSize="12sp"
-                android:layout_marginTop="2dp"/>
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:orientation="vertical"
-            android:gravity="center">
-
-            <TextView
-                android:id="@+id/tvPublished"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="142"
-                android:textColor="#10B981"
-                android:textSize="20sp"
-                android:textStyle="bold"/>
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Đã xuất bản"
-                android:textColor="#6B7280"
-                android:textSize="12sp"
-                android:layout_marginTop="2dp"/>
-        </LinearLayout>
-    </LinearLayout>
-
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/rvDecks"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:paddingHorizontal="16dp"
-        android:clipToPadding="false"/>
-
-    <ProgressBar
-        android:id="@+id/progressBar"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:visibility="gone"/>
+    </androidx.coordinatorlayout.widget.CoordinatorLayout>
 
 </LinearLayout>

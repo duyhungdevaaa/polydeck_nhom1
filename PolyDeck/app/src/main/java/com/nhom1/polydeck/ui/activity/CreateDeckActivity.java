@@ -8,6 +8,7 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 
@@ -109,22 +110,19 @@ public class CreateDeckActivity extends AppCompatActivity {
         }
 
         BoTu boTu = new BoTu();
-        boTu.setTenBoTu(deckName);
-        boTu.setMauSac(selectedColor);
-        boTu.setSoTu(0);
-        boTu.setSoNguoiDung(0);
-        boTu.setTrangThai("Nháp");
+        boTu.setTenChuDe(deckName);
+        boTu.setLinkAnhIcon(selectedColor);
 
-        apiService.createBoTu(boTu).enqueue(new Callback<BoTu>() {
+        apiService.createChuDe(boTu).enqueue(new Callback<BoTu>() {
             @Override
-            public void onResponse(Call<BoTu> call, Response<BoTu> response) {
+            public void onResponse(@NonNull Call<BoTu> call, @NonNull Response<BoTu> response) {
                 if (response.isSuccessful() && response.body() != null) {
                     Toast.makeText(CreateDeckActivity.this,
                             "Đã tạo bộ từ thành công", Toast.LENGTH_SHORT).show();
 
                     Intent intent = new Intent(CreateDeckActivity.this, AddVocabularyActivity.class);
-                    intent.putExtra("deck_id", response.body().getId());
-                    intent.putExtra("deck_name", response.body().getTenBoTu());
+                    // FIX: Changed "deck_id" to "DECK_ID" to match the key expected by AddVocabularyActivity
+                    intent.putExtra("DECK_ID", response.body().getId());
                     startActivity(intent);
                     finish();
                 } else {
@@ -134,7 +132,7 @@ public class CreateDeckActivity extends AppCompatActivity {
             }
 
             @Override
-            public void onFailure(Call<BoTu> call, Throwable t) {
+            public void onFailure(@NonNull Call<BoTu> call, @NonNull Throwable t) {
                 Toast.makeText(CreateDeckActivity.this,
                         "Lỗi: " + t.getMessage(), Toast.LENGTH_SHORT).show();
             }

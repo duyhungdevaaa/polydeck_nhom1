@@ -4,6 +4,7 @@
     <string name="user_initials">NV</string>
     <string name="user_name_placeholder">Nguyen Van A</string>
     <string name="status_active">Hoạt động</string>
+    <string name="status_banned">Bị khóa</string>
     <string name="user_email_placeholder">nguyenvana@email.com</string>
     <string name="user_info_placeholder">Level 5 • 1250 XP • 10/10/2024</string>
     <string name="button_detail">Chi tiết</string>
@@ -35,6 +36,10 @@
     <string name="search_users_hint">Tìm kiếm người dùng...</string>
     <string name="total_label">Tổng</string>
     <string name="blocked_label">Bị khóa</string>
+
+    <!-- User Management -->
+    <string name="user_management_title">Quản lý người dùng</string>
+    <string name="search_user_hint">Tìm kiếm người dùng...</string>
 
     <!-- Login Screen -->
     <string name="login_title">Đăng nhập vào tài khoản của bạn</string>

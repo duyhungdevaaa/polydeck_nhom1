@@ -12,7 +12,6 @@ const chuDeSchema = new mongoose.Schema({
   collection: 'chu_de'
 });
 
-chuDeSchema.index({ ma_chu_de: 1 });
 chuDeSchema.index({ ten_chu_de: 1 });
 
 module.exports = mongoose.model('ChuDe', chuDeSchema);

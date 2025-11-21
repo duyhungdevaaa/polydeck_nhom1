@@ -12,6 +12,7 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.android.material.button.MaterialButton;
@@ -72,10 +73,8 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     private void setupGoogleSignIn() {
-        // TODO: Thay YOUR_WEB_CLIENT_ID bằng Google Client ID từ Google Cloud Console
-        // Lấy từ: https://console.cloud.google.com/apis/credentials
         GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-                .requestIdToken("458654847284-06v4cluss9i716rhg3o8e1vmgbhvout1.apps.googleusercontent.com") // Web Client ID, không phải Android Client ID
+                .requestIdToken("458654847284-06v4cluss9i716rhg3o8e1vmgbhvout1.apps.googleusercontent.com") // Web Client ID
                 .requestEmail()
                 .build();
 
@@ -100,76 +99,50 @@ public class LoginActivity extends AppCompatActivity {
 
     private void togglePasswordVisibility() {
         if (isPasswordVisible) {
-            // Ẩn mật khẩu
             inputPassword.setTransformationMethod(PasswordTransformationMethod.getInstance());
             inputPassword.setCompoundDrawablesWithIntrinsicBounds(0, 0, R.drawable.ic_eye_off, 0);
             isPasswordVisible = false;
         } else {
-            // Hiện mật khẩu
             inputPassword.setTransformationMethod(HideReturnsTransformationMethod.getInstance());
             inputPassword.setCompoundDrawablesWithIntrinsicBounds(0, 0, R.drawable.ic_eye_on, 0);
             isPasswordVisible = true;
         }
-        // Giữ con trỏ ở cuối text
         inputPassword.setSelection(inputPassword.getText().length());
     }
 
     private void setupClickListeners() {
-        // Đăng nhập
         loginButton.setOnClickListener(v -> handleLogin());
-
-        // Chuyển đến màn hình đăng ký
         registerNow.setOnClickListener(v -> {
             Intent intent = new Intent(LoginActivity.this, RegisterActivity.class);
             startActivity(intent);
         });
-
-        // Quên mật khẩu
-
         forgotPassword.setOnClickListener(v -> {
             Intent intent = new Intent(LoginActivity.this, ForgotPasswordActivity.class);
             startActivity(intent);
         });
-
-
-        // Đăng nhập bằng Google
-        googleButton.setOnClickListener(v -> {
-            Toast.makeText(this, "Đăng nhập bằng Google", Toast.LENGTH_SHORT).show();
-            // TODO: Implement Google Sign-In
-            handleGoogleSignIn();
-        });
+        googleButton.setOnClickListener(v -> handleGoogleSignIn());
     }
 
     private void handleLogin() {
         String email = inputEmail.getText().toString().trim();
         String password = inputPassword.getText().toString().trim();
 
-        // Validate input
         if (email.isEmpty()) {
             inputEmail.setError("Vui lòng nhập email");
             inputEmail.requestFocus();
             return;
         }
-
         if (!isValidEmail(email)) {
             inputEmail.setError("Email không hợp lệ");
             inputEmail.requestFocus();
             return;
         }
-
         if (password.isEmpty()) {
             inputPassword.setError("Vui lòng nhập mật khẩu");
             inputPassword.requestFocus();
             return;
         }
 
-        if (password.length() < 6) {
-            inputPassword.setError("Mật khẩu phải có ít nhất 6 ký tự");
-            inputPassword.requestFocus();
-            return;
-        }
-
-        // TODO: Implement actual login logic with API
         performLogin(email, password);
     }
 
@@ -185,57 +158,45 @@ public class LoginActivity extends AppCompatActivity {
         Call<ApiResponse<LoginResponse>> call = apiService.login(request);
         call.enqueue(new Callback<ApiResponse<LoginResponse>>() {
             @Override
-            public void onResponse(Call<ApiResponse<LoginResponse>> call, Response<ApiResponse<LoginResponse>> response) {
+            public void onResponse(@NonNull Call<ApiResponse<LoginResponse>> call, @NonNull Response<ApiResponse<LoginResponse>> response) {
                 showLoading(false);
 
                 if (response.isSuccessful() && response.body() != null) {
                     ApiResponse<LoginResponse> apiResponse = response.body();
                     if (apiResponse.isSuccess()) {
                         LoginResponse loginData = apiResponse.getData();
-                        Toast.makeText(LoginActivity.this, apiResponse.getMessage(), Toast.LENGTH_SHORT).show();
-                        
-                        // TODO: Lưu thông tin user vào SharedPreferences hoặc Session
-                        
-                        // Chuyển màn hình dựa vào vai trò
-                        Intent intent;
-                        String vaiTro = loginData.getVaiTro();
-                        if (vaiTro != null && vaiTro.equals("admin")) {
-                            // Admin → Admin Dashboard
-                            intent = new Intent(LoginActivity.this, AdminDashboardActivity.class);
+                        if (loginData != null) {
+                            Toast.makeText(LoginActivity.this, apiResponse.getMessage(), Toast.LENGTH_SHORT).show();
+
+                            Intent intent;
+                            // FIX: Get role directly from LoginResponse
+                            String vaiTro = loginData.getVaiTro();
+
+                            if (vaiTro != null && vaiTro.equals("admin")) {
+                                // Admin → Admin Panel
+                                intent = new Intent(LoginActivity.this, AdminPanelActivity.class);
+                            } else {
+                                // Student/User → Main Activity
+                                intent = new Intent(LoginActivity.this, MainActivity.class);
+                            }
+                            startActivity(intent);
+                            finish();
                         } else {
-                            // Student/User → Main Activity
-                            intent = new Intent(LoginActivity.this, MainActivity.class);
+                             Toast.makeText(LoginActivity.this, "Dữ liệu đăng nhập không hợp lệ", Toast.LENGTH_SHORT).show();
                         }
-                        startActivity(intent);
-                        finish();
                     } else {
                         Toast.makeText(LoginActivity.this, apiResponse.getMessage(), Toast.LENGTH_SHORT).show();
                     }
                 } else {
-                    String errorMessage = "Đăng nhập thất bại";
-                    if (response.errorBody() != null) {
-                        try {
-                            errorMessage = "Lỗi: " + response.code();
-                        } catch (Exception e) {
-                            errorMessage = "Lỗi kết nối";
-                        }
-                    }
+                    String errorMessage = "Đăng nhập thất bại. Mã lỗi: " + response.code();
                     Toast.makeText(LoginActivity.this, errorMessage, Toast.LENGTH_SHORT).show();
                 }
             }
 
             @Override
-            public void onFailure(Call<ApiResponse<LoginResponse>> call, Throwable t) {
+            public void onFailure(@NonNull Call<ApiResponse<LoginResponse>> call, @NonNull Throwable t) {
                 showLoading(false);
-                String errorMsg = "Lỗi kết nối";
-                if (t.getMessage() != null) {
-                    if (t.getMessage().contains("Failed to connect") || t.getMessage().contains("Unable to resolve host")) {
-                        errorMsg = "Không thể kết nối đến server. Vui lòng kiểm tra:\n- Server đã chạy chưa?\n- IP/URL đúng chưa?";
-                    } else {
-                        errorMsg = "Lỗi: " + t.getMessage();
-                    }
-                }
-                Toast.makeText(LoginActivity.this, errorMsg, Toast.LENGTH_LONG).show();
+                Toast.makeText(LoginActivity.this, "Lỗi kết nối: " + t.getMessage(), Toast.LENGTH_LONG).show();
             }
         });
     }
@@ -249,7 +210,7 @@ public class LoginActivity extends AppCompatActivity {
 
     private void handleGoogleSignIn() {
         if (googleSignInClient == null) {
-            Toast.makeText(this, "Google Sign-In chưa được cấu hình. Vui lòng thêm Web Client ID.", Toast.LENGTH_LONG).show();
+            Toast.makeText(this, "Google Sign-In chưa được cấu hình.", Toast.LENGTH_LONG).show();
             return;
         }
         
@@ -266,7 +227,6 @@ public class LoginActivity extends AppCompatActivity {
             try {
                 GoogleSignInAccount account = task.getResult(ApiException.class);
                 if (account != null && account.getIdToken() != null) {
-                    // Gửi id_token lên server
                     performGoogleLogin(account.getIdToken());
                 }
             } catch (ApiException e) {
@@ -283,55 +243,45 @@ public class LoginActivity extends AppCompatActivity {
         Call<ApiResponse<LoginResponse>> call = apiService.googleLogin(request);
         call.enqueue(new Callback<ApiResponse<LoginResponse>>() {
             @Override
-            public void onResponse(Call<ApiResponse<LoginResponse>> call, Response<ApiResponse<LoginResponse>> response) {
+            public void onResponse(@NonNull Call<ApiResponse<LoginResponse>> call, @NonNull Response<ApiResponse<LoginResponse>> response) {
                 showLoading(false);
 
                 if (response.isSuccessful() && response.body() != null) {
                     ApiResponse<LoginResponse> apiResponse = response.body();
                     if (apiResponse.isSuccess()) {
                         LoginResponse loginData = apiResponse.getData();
-                        Toast.makeText(LoginActivity.this, apiResponse.getMessage(), Toast.LENGTH_SHORT).show();
-                        
-                        // TODO: Lưu thông tin user vào SharedPreferences
-                        
-                        // Chuyển màn hình dựa vào vai trò
-                        Intent intent;
-                        String vaiTro = loginData.getVaiTro();
-                        if (vaiTro != null && vaiTro.equals("admin")) {
-                            intent = new Intent(LoginActivity.this, AdminDashboardActivity.class);
+                        if (loginData != null) {
+                            Toast.makeText(LoginActivity.this, apiResponse.getMessage(), Toast.LENGTH_SHORT).show();
+                            
+                            Intent intent;
+                             // FIX: Get role directly from LoginResponse
+                            String vaiTro = loginData.getVaiTro();
+
+                            if (vaiTro != null && vaiTro.equals("admin")) {
+                                // Admin → Admin Panel
+                                intent = new Intent(LoginActivity.this, AdminPanelActivity.class);
+                            } else {
+                                // Student/User → Main Activity
+                                intent = new Intent(LoginActivity.this, MainActivity.class);
+                            }
+                            startActivity(intent);
+                            finish();
                         } else {
-                            intent = new Intent(LoginActivity.this, MainActivity.class);
+                            Toast.makeText(LoginActivity.this, "Dữ liệu đăng nhập không hợp lệ", Toast.LENGTH_SHORT).show();
                         }
-                        startActivity(intent);
-                        finish();
                     } else {
                         Toast.makeText(LoginActivity.this, apiResponse.getMessage(), Toast.LENGTH_SHORT).show();
                     }
                 } else {
-                    String errorMessage = "Đăng nhập Google thất bại";
-                    if (response.errorBody() != null) {
-                        try {
-                            errorMessage = "Lỗi: " + response.code();
-                        } catch (Exception e) {
-                            errorMessage = "Lỗi kết nối";
-                        }
-                    }
+                    String errorMessage = "Đăng nhập Google thất bại. Mã lỗi: " + response.code();
                     Toast.makeText(LoginActivity.this, errorMessage, Toast.LENGTH_SHORT).show();
                 }
             }
 
             @Override
-            public void onFailure(Call<ApiResponse<LoginResponse>> call, Throwable t) {
+            public void onFailure(@NonNull Call<ApiResponse<LoginResponse>> call, @NonNull Throwable t) {
                 showLoading(false);
-                String errorMsg = "Lỗi kết nối";
-                if (t.getMessage() != null) {
-                    if (t.getMessage().contains("Failed to connect") || t.getMessage().contains("Unable to resolve host")) {
-                        errorMsg = "Không thể kết nối đến server";
-                    } else {
-                        errorMsg = "Lỗi: " + t.getMessage();
-                    }
-                }
-                Toast.makeText(LoginActivity.this, errorMsg, Toast.LENGTH_LONG).show();
+                Toast.makeText(LoginActivity.this, "Lỗi kết nối: " + t.getMessage(), Toast.LENGTH_LONG).show();
             }
         });
     }
@@ -339,7 +289,6 @@ public class LoginActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        // Clear sensitive data
         if (inputPassword != null) {
             inputPassword.setText("");
         }

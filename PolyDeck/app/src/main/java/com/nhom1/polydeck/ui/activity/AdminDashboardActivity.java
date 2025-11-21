@@ -110,17 +110,6 @@ public class AdminDashboardActivity extends AppCompatActivity {
             startActivity(intent);
         });
 
-//        cardQuiz.setOnClickListener(v -> {
-//            Toast.makeText(this, "Chức năng đang phát triển", Toast.LENGTH_SHORT).show();
-//        });
-//
-//        cardNotification.setOnClickListener(v -> {
-//            Toast.makeText(this, "Chức năng đang phát triển", Toast.LENGTH_SHORT).show();
-//        });
-//
-//        cardSupport.setOnClickListener(v -> {
-//            Toast.makeText(this, "Chức năng đang phát triển", Toast.LENGTH_SHORT).show();
-//        });
 
         btnLogout.setOnClickListener(v -> {
             finish();

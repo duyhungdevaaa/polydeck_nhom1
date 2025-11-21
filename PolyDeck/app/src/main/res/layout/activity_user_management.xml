@@ -1,190 +1,67 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="#F5F5F5">
+    android:background="#F9FAFB"
+    tools:context=".ui.activity.UserManagementActivity">
 
-    <!-- Toolbar -->
-    <androidx.cardview.widget.CardView
+    <androidx.appcompat.widget.Toolbar
+        android:id="@+id/toolbar"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        app:cardElevation="4dp"
-        app:cardCornerRadius="0dp">
+        android:layout_height="?attr/actionBarSize"
+        android:background="@android:color/white"
+        app:title="@string/user_management_title"
+        app:navigationIcon="@drawable/ic_arrow_back" />
 
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="?attr/actionBarSize"
-            android:orientation="horizontal"
-            android:gravity="center_vertical"
-            android:paddingHorizontal="16dp"
-            android:background="@android:color/white">
-
-            <ImageView
-                android:id="@+id/btnBack"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:src="@drawable/ic_back"
-                android:padding="10dp"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                app:tint="#1F2937"
-                android:contentDescription="@string/back"/>
-
-            <TextView
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="@string/menu_users"
-                android:textColor="#1F2937"
-                android:textSize="18sp"
-                android:textStyle="bold"
-                android:layout_marginStart="8dp"/>
-        </LinearLayout>
-    </androidx.cardview.widget.CardView>
-
-    <!-- Search Bar -->
-    <androidx.cardview.widget.CardView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_margin="16dp"
-        app:cardCornerRadius="12dp"
-        app:cardElevation="2dp">
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical"
-            android:padding="12dp"
-            android:background="@android:color/white">
-
-            <ImageView
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:src="@drawable/ic_search"
-                app:tint="#9CA3AF"
-                android:contentDescription="@string/search_users_hint"/>
-
-            <EditText
-                android:id="@+id/etSearch"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:hint="@string/search_users_hint"
-                android:textSize="14sp"
-                android:textColor="#1F2937"
-                android:textColorHint="#9CA3AF"
-                android:background="@android:color/transparent"
-                android:paddingHorizontal="12dp"
-                android:paddingVertical="4dp"
-                android:inputType="text"
-                android:imeOptions="actionSearch"/>
-        </LinearLayout>
-    </androidx.cardview.widget.CardView>
-
-    <!-- Stats Row -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:paddingHorizontal="16dp"
-        android:paddingBottom="16dp">
+        android:orientation="vertical"
+        android:padding="16dp">
 
-        <!-- Tổng -->
-        <LinearLayout
-            android:layout_width="0dp"
+        <!-- Search Bar -->
+        <EditText
+            android:id="@+id/etSearchUser"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:orientation="vertical"
-            android:gravity="center">
+            android:hint="@string/search_user_hint"
+            android:background="@drawable/bg_search_edit_text"
+            android:padding="12dp"
+            android:drawableStart="@drawable/ic_search"
+            android:drawablePadding="8dp"/>
+
+        <!-- Stats -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="16dp">
 
             <TextView
-                android:id="@+id/tvTotalCount"
+                android:id="@+id/tvTotalUsers"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/total_users_count"
-                android:textColor="#1F2937"
-                android:textSize="20sp"
-                android:textStyle="bold"/>
+                android:text="1,234 Hoạt động"
+                android:textStyle="bold" />
 
             <TextView
+                android:id="@+id/tvBannedUsers"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/total_label"
-                android:textColor="#6B7280"
-                android:textSize="12sp"
-                android:layout_marginTop="2dp"/>
+                android:layout_marginStart="16dp"
+                android:text="12 Bị khóa" />
         </LinearLayout>
 
-        <!-- Hoạt động -->
-        <LinearLayout
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:orientation="vertical"
-            android:gravity="center">
-
-            <TextView
-                android:id="@+id/tvActiveCount"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/active_users_count"
-                android:textColor="#10B981"
-                android:textSize="20sp"
-                android:textStyle="bold"/>
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/active_users_label"
-                android:textColor="#6B7280"
-                android:textSize="12sp"
-                android:layout_marginTop="2dp"/>
-        </LinearLayout>
-
-        <!-- Bị khóa -->
-        <LinearLayout
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:orientation="vertical"
-            android:gravity="center">
-
-            <TextView
-                android:id="@+id/tvBlockedCount"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="12"
-                android:textColor="#EF4444"
-                android:textSize="20sp"
-                android:textStyle="bold"/>
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/blocked_label"
-                android:textColor="#6B7280"
-                android:textSize="12sp"
-                android:layout_marginTop="2dp"/>
-        </LinearLayout>
     </LinearLayout>
 
-    <!-- RecyclerView -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rvUsers"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
+        android:layout_height="match_parent"
         android:paddingHorizontal="16dp"
-        android:clipToPadding="false"/>
-
-    <!-- Loading -->
-    <ProgressBar
-        android:id="@+id/progressBar"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:visibility="gone"/>
+        tools:listitem="@layout/item_user" />
 
 </LinearLayout>

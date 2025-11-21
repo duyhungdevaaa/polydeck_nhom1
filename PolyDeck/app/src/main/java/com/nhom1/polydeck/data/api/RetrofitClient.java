@@ -9,7 +9,7 @@ import java.util.concurrent.TimeUnit;
 
 public class RetrofitClient {
 
-    private static final String BASE_URL = "http://10.0.2.2:3000/"; // 10.0.2.2 = localhost trong Android Emulator
+    private static final String BASE_URL = "http://192.168.1.14:3000/";
 
     private static Retrofit retrofit;
 

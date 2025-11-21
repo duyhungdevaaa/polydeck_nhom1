@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginTop="8dp"
+    android:layout_marginBottom="8dp"
+    app:cardCornerRadius="8dp"
+    app:cardElevation="2dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <TextView
+                android:id="@+id/tvQuestionNumber"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Câu 1"
+                android:textStyle="bold" />
+
+            <ImageButton
+                android:id="@+id/btnDeleteQuestion"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@drawable/ic_delete"
+                app:tint="#EF4444" />
+        </LinearLayout>
+
+        <com.google.android.material.textfield.TextInputLayout
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:hint="Câu hỏi (ví dụ: What does...)">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etQuestionText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <!-- Answers -->
+        <RadioGroup
+            android:id="@+id/rgAnswers"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp">
+
+            <LinearLayout style="@style/AnswerOptionLayout">
+                <RadioButton android:id="@+id/rbAnswer1" style="@style/AnswerRadioButton"/>
+                <EditText android:id="@+id/etAnswer1" style="@style/AnswerEditText" android:hint="Đáp án 1"/>
+            </LinearLayout>
+
+            <LinearLayout style="@style/AnswerOptionLayout">
+                <RadioButton android:id="@+id/rbAnswer2" style="@style/AnswerRadioButton"/>
+                <EditText android:id="@+id/etAnswer2" style="@style/AnswerEditText" android:hint="Đáp án 2"/>
+            </LinearLayout>
+
+            <LinearLayout style="@style/AnswerOptionLayout">
+                <RadioButton android:id="@+id/rbAnswer3" style="@style/AnswerRadioButton"/>
+                <EditText android:id="@+id/etAnswer3" style="@style/AnswerEditText" android:hint="Đáp án 3 (tùy chọn)"/>
+            </LinearLayout>
+
+            <LinearLayout style="@style/AnswerOptionLayout">
+                <RadioButton android:id="@+id/rbAnswer4" style="@style/AnswerRadioButton"/>
+                <EditText android:id="@+id/etAnswer4" style="@style/AnswerEditText" android:hint="Đáp án 4 (tùy chọn)"/>
+            </LinearLayout>
+
+        </RadioGroup>
+    </LinearLayout>
+
+</androidx.cardview.widget.CardView>

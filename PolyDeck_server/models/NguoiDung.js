@@ -19,8 +19,8 @@ const nguoiDungSchema = new mongoose.Schema({
   collection: 'nguoi_dung'
 });
 
-nguoiDungSchema.index({ ma_nguoi_dung: 1 });
-nguoiDungSchema.index({ email: 1 });
+// `unique: true` already creates indexes for `ma_nguoi_dung` and `email`.
+// Keep explicit index only for queries on other fields if needed.
 
 module.exports = mongoose.model('NguoiDung', nguoiDungSchema);
 
