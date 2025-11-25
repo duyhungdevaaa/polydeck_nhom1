@@ -8,3 +8,4 @@ public class QuizResult {
     @SerializedName("total") public int total;
 }
 
+

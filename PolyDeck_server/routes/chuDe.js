@@ -146,10 +146,14 @@ router.post('/:chuDeId/them-tu-vung', upload.single('file'), async (req, res) =>
 
 router.get('/:chuDeId/tuvung', async (req, res) => {
     try {
-        const vocabList = await TuVung.find({ ma_chu_de: req.params.chuDeId });
-        
+        // Chấp nhận cả ObjectId lẫn ma_chu_de
+        const chuDe = await ChuDe.findOne(resolveChuDeFilter(req.params.chuDeId));
+        if (!chuDe) {
+            return res.status(404).json({ message: 'Không tìm thấy chủ đề' });
+        }
+        const maChuDe = chuDe.ma_chu_de || req.params.chuDeId;
+        const vocabList = await TuVung.find({ ma_chu_de: maChuDe });
         res.json(vocabList);
-
     } catch (err) {
         console.error('Lỗi khi lấy danh sách từ vựng:', err);
         res.status(500).json({ message: 'Lỗi server' });
