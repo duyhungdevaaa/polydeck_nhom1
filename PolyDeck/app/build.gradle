@@ -26,9 +26,21 @@ android {
         sourceCompatibility JavaVersion.VERSION_11
         targetCompatibility JavaVersion.VERSION_11
     }
+    packagingOptions {
+        exclude 'META-INF/versions/9/previous-compilation-data.bin'
+    }
 }
 
 dependencies {
+    // Apache POI for reading Excel files
+    implementation 'org.apache.poi:poi:5.2.3'
+    implementation 'org.apache.poi:poi-ooxml:5.2.3'
+    // Required for Apache POI on Android
+    implementation 'org.apache.commons:commons-compress:1.21'
+    implementation 'com.github.virtuald:curvesapi:1.07'
+    implementation 'org.apache.logging.log4j:log4j-api:2.17.2'
+    implementation 'org.apache.commons:commons-collections4:4.4'
+
     // Glide - Image Loading Library
     implementation 'com.github.bumptech.glide:glide:4.12.0'
     annotationProcessor 'com.github.bumptech.glide:compiler:4.12.0'

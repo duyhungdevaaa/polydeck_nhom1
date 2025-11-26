@@ -9,18 +9,23 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
+import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 
 import com.nhom1.polydeck.R;
 import com.nhom1.polydeck.data.api.APIService;
 import com.nhom1.polydeck.data.api.RetrofitClient;
+import com.nhom1.polydeck.data.model.Answer;
 import com.nhom1.polydeck.data.model.BoTu;
+import com.nhom1.polydeck.data.model.Question;
+import com.nhom1.polydeck.data.model.Quiz;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -82,7 +87,7 @@ public class CreateQuizActivity extends AppCompatActivity {
     private void fetchDecksForSpinner() {
         apiService.getAllChuDe().enqueue(new Callback<List<BoTu>>() {
             @Override
-            public void onResponse(Call<List<BoTu>> call, Response<List<BoTu>> response) {
+            public void onResponse(@NonNull Call<List<BoTu>> call, @NonNull Response<List<BoTu>> response) {
                 if (response.isSuccessful() && response.body() != null) {
                     deckList = response.body();
                     List<String> deckNames = deckList.stream().map(BoTu::getTenChuDe).collect(Collectors.toList());
@@ -102,7 +107,7 @@ public class CreateQuizActivity extends AppCompatActivity {
                 }
             }
             @Override
-            public void onFailure(Call<List<BoTu>> call, Throwable t) {
+            public void onFailure(@NonNull Call<List<BoTu>> call, @NonNull Throwable t) {
                 Toast.makeText(CreateQuizActivity.this, "Không thể tải danh sách bộ từ", Toast.LENGTH_SHORT).show();
             }
         });
@@ -139,13 +144,60 @@ public class CreateQuizActivity extends AppCompatActivity {
             return;
         }
 
-        if (questionViews.isEmpty()) {
+        List<Question> questions = new ArrayList<>();
+
+        for (View questionView : questionViews) {
+            EditText etQuestionText = questionView.findViewById(R.id.etQuestionText);
+            RadioGroup rgAnswers = questionView.findViewById(R.id.rgAnswers);
+            EditText etAnswer1 = questionView.findViewById(R.id.etAnswer1);
+            EditText etAnswer2 = questionView.findViewById(R.id.etAnswer2);
+            EditText etAnswer3 = questionView.findViewById(R.id.etAnswer3);
+            EditText etAnswer4 = questionView.findViewById(R.id.etAnswer4);
+
+            String questionText = etQuestionText.getText().toString().trim();
+            if (questionText.isEmpty()) {
+                Toast.makeText(this, "Vui lòng nhập đầy đủ nội dung câu hỏi", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            List<Answer> answers = new ArrayList<>();
+            int checkedRadioButtonId = rgAnswers.getCheckedRadioButtonId();
+            if (checkedRadioButtonId == -1) {
+                Toast.makeText(this, "Vui lòng chọn một đáp án đúng cho mỗi câu hỏi", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            answers.add(new Answer(etAnswer1.getText().toString(), R.id.rbAnswer1 == checkedRadioButtonId));
+            answers.add(new Answer(etAnswer2.getText().toString(), R.id.rbAnswer2 == checkedRadioButtonId));
+            answers.add(new Answer(etAnswer3.getText().toString(), R.id.rbAnswer3 == checkedRadioButtonId));
+            answers.add(new Answer(etAnswer4.getText().toString(), R.id.rbAnswer4 == checkedRadioButtonId));
+
+            questions.add(new Question(questionText, answers));
+        }
+
+        if (questions.isEmpty()) {
             Toast.makeText(this, "Vui lòng thêm ít nhất một câu hỏi", Toast.LENGTH_SHORT).show();
             return;
         }
 
+        Quiz quiz = new Quiz(selectedDeck.getId(), questions);
 
-        Toast.makeText(this, "Chức năng Lưu Quiz đang được phát triển.", Toast.LENGTH_LONG).show();
-        Log.d(TAG, "Selected Deck ID: " + selectedDeck.getId());
+        apiService.createQuiz(quiz).enqueue(new Callback<Quiz>() {
+            @Override
+            public void onResponse(@NonNull Call<Quiz> call, @NonNull Response<Quiz> response) {
+                if (response.isSuccessful()) {
+                    Toast.makeText(CreateQuizActivity.this, "Tạo quiz thành công!", Toast.LENGTH_SHORT).show();
+                    finish();
+                } else {
+                    Toast.makeText(CreateQuizActivity.this, "Tạo quiz thất bại", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<Quiz> call, @NonNull Throwable t) {
+                Log.e(TAG, "API call failed: " + t.getMessage());
+                Toast.makeText(CreateQuizActivity.this, "Lỗi: " + t.getMessage(), Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 }

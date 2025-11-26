@@ -22,7 +22,6 @@ import java.util.Map;
 public class HistoryAdapter extends RecyclerView.Adapter<HistoryAdapter.Holder> {
     private final List<LichSuLamBai> items = new ArrayList<>();
     private final SimpleDateFormat dfDate = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
-    private final SimpleDateFormat dfTime = new SimpleDateFormat("mm:ss", Locale.getDefault());
     private final Map<String, String> topicNameMap = new HashMap<>();
 
     public void setItems(List<LichSuLamBai> list) {
@@ -47,29 +46,26 @@ public class HistoryAdapter extends RecyclerView.Adapter<HistoryAdapter.Holder> 
     @Override
     public void onBindViewHolder(@NonNull Holder h, int position) {
         LichSuLamBai it = items.get(position);
-        String topicId = it.maChuDe;
+        
+        // FIX: Use getter methods to access private fields
+        String topicId = it.getMaChuDe();
         String topicName = topicId != null ? topicNameMap.get(topicId) : null;
         h.tvTopic.setText("Chủ đề: " + (topicName != null ? topicName : (topicId != null ? topicId : "-")));
-        h.tvScore.setText(it.diemSo + "%");
+        h.tvScore.setText(it.getDiemSo() + "%");
 
         String dateStr = "-";
-        if (it.ngayHoanThanh != null) {
-            dateStr = dfDate.format(it.ngayHoanThanh);
+        if (it.getNgayLamBai() != null) {
+            dateStr = dfDate.format(it.getNgayLamBai());
         }
-        String timeStr = formatSeconds(it.thoiGianLamBai);
-        h.tvDetail.setText(it.diemDanhDuoc + " câu đúng • " + timeStr + " • " + dateStr);
+        
+        // FIX: The field is soCauDung, not diemDanhDuoc
+        String detailText = it.getSoCauDung() + "/" + it.getTongSoCau() + " câu đúng • " + dateStr;
+        h.tvDetail.setText(detailText);
     }
 
     @Override
     public int getItemCount() {
         return items.size();
-    }
-
-    private String formatSeconds(int seconds) {
-        if (seconds <= 0) return "00:00";
-        long s = seconds % 60L;
-        long m = (seconds / 60L) % 60L;
-        return String.format(Locale.getDefault(), "%02d:%02d", m, s);
     }
 
     static class Holder extends RecyclerView.ViewHolder {
@@ -82,6 +78,3 @@ public class HistoryAdapter extends RecyclerView.Adapter<HistoryAdapter.Holder> 
         }
     }
 }
-
-
-

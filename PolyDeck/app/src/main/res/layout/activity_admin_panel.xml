@@ -24,7 +24,6 @@
             android:textColor="@android:color/white"
             android:textSize="20sp"
             android:textStyle="bold" />
-        <!-- FIX: Changed ID and src for logout button -->
         <ImageView
             android:id="@+id/btnLogout"
             android:layout_width="40dp"
@@ -90,6 +89,7 @@
                 android:textSize="18sp"
                 android:textStyle="bold" />
 
+            <!-- FIX: Placed ALL cards inside ONE SINGLE GridLayout -->
             <GridLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -110,6 +110,13 @@
                     </LinearLayout>
                 </androidx.cardview.widget.CardView>
 
+                <androidx.cardview.widget.CardView style="@style/AdminMenuCard" android:id="@+id/menuCreateQuiz">
+                     <LinearLayout style="@style/AdminMenuCard.Content">
+                        <ImageView style="@style/AdminMenuCard.Icon" android:src="@drawable/ic_create_quiz"/>
+                        <TextView style="@style/AdminMenuCard.Text" android:text="Tạo Quiz"/>
+                    </LinearLayout>
+                </androidx.cardview.widget.CardView>
+
                  <androidx.cardview.widget.CardView style="@style/AdminMenuCard" android:id="@+id/menuSendNotification">
                      <LinearLayout style="@style/AdminMenuCard.Content">
                         <ImageView style="@style/AdminMenuCard.Icon" android:src="@drawable/ic_notification"/>
@@ -123,6 +130,7 @@
                         <TextView style="@style/AdminMenuCard.Text" android:text="Hỗ trợ"/>
                     </LinearLayout>
                 </androidx.cardview.widget.CardView>
+
             </GridLayout>
 
         </LinearLayout>

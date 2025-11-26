@@ -17,6 +17,7 @@ import com.nhom1.polydeck.R;
 import com.nhom1.polydeck.data.api.APIService;
 import com.nhom1.polydeck.data.api.RetrofitClient;
 import com.nhom1.polydeck.data.model.AdminStats;
+import com.nhom1.polydeck.utils.SessionManager;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -27,7 +28,7 @@ public class AdminPanelActivity extends AppCompatActivity {
     private static final String TAG = "AdminPanelActivity";
 
     private TextView tvTotalUsersStat, tvTotalDecksStat, tvNewUsersStat, tvTotalVocabStat;
-    private CardView menuUserManagement, menuDeckManagement, menuSendNotification, menuSupportRequests;
+    private CardView menuUserManagement, menuDeckManagement, menuCreateQuiz, menuSendNotification, menuSupportRequests;
     private ImageView btnLogout;
     private APIService apiService;
 
@@ -51,6 +52,7 @@ public class AdminPanelActivity extends AppCompatActivity {
 
         menuUserManagement = findViewById(R.id.menuUserManagement);
         menuDeckManagement = findViewById(R.id.menuDeckManagement);
+        menuCreateQuiz = findViewById(R.id.menuCreateQuiz);
         menuSendNotification = findViewById(R.id.menuSendNotification);
         menuSupportRequests = findViewById(R.id.menuSupportRequests);
         btnLogout = findViewById(R.id.btnLogout);
@@ -62,6 +64,9 @@ public class AdminPanelActivity extends AppCompatActivity {
 
         menuDeckManagement.setOnClickListener(v -> 
             startActivity(new Intent(this, DeckManagementActivity.class)));
+
+        menuCreateQuiz.setOnClickListener(v -> 
+            startActivity(new Intent(this, CreateQuizActivity.class)));
 
         menuSendNotification.setOnClickListener(v -> 
             startActivity(new Intent(this, SendNotificationActivity.class)));
@@ -78,7 +83,10 @@ public class AdminPanelActivity extends AppCompatActivity {
                 .setTitle("Đăng xuất")
                 .setMessage("Bạn có chắc chắn muốn đăng xuất?")
                 .setPositiveButton("Đăng xuất", (dialog, which) -> {
-                    // TODO: Clear user session/token here
+                    // FIX: Call the logout method from SessionManager
+                    SessionManager sessionManager = new SessionManager(this);
+                    sessionManager.logout();
+
                     Intent intent = new Intent(AdminPanelActivity.this, LoginActivity.class);
                     intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                     startActivity(intent);

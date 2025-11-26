@@ -133,7 +133,6 @@ public class DeckManagementActivity extends AppCompatActivity {
             return;
         }
 
-        // No need to call API for search if you want to filter locally
         List<BoTu> filteredList = new ArrayList<>();
         for (BoTu deck : fullDeckList) {
             if (deck.getTenChuDe().toLowerCase().contains(query.toLowerCase())) {

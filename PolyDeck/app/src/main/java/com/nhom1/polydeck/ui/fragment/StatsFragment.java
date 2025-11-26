@@ -56,6 +56,8 @@ public class StatsFragment extends Fragment {
 
         APIService api = RetrofitClient.getApiService();
         SessionManager sm = new SessionManager(requireContext());
+        
+        // FIX: Reverted to use getMaNguoiDung() as expected by the server schema
         String userId = sm.getUserData() != null ? sm.getUserData().getMaNguoiDung() : null;
         if (userId == null) return;
 
@@ -67,28 +69,28 @@ public class StatsFragment extends Fragment {
                     adapter.setItems(list);
 
                     int xp = 0;
-                    int streak = 0; // số ngày có bài
+                    int streak = 0;
                     int wordsLearned = 0;
-                    int accuracySum = 0;
+                    float accuracySum = 0;
                     java.util.HashSet<String> days = new java.util.HashSet<>();
                     java.text.SimpleDateFormat df = new java.text.SimpleDateFormat("yyyy-MM-dd");
                     for (LichSuLamBai h : list) {
-                        xp += Math.max(50, h.diemSo);
-                        wordsLearned += Math.max(0, h.diemDanhDuoc);
-                        accuracySum += Math.max(0, h.diemSo);
-                        if (h.ngayHoanThanh != null) days.add(df.format(h.ngayHoanThanh));
+                        // FIX: Use the correct getter methods from the LichSuLamBai model
+                        xp += Math.max(50, h.getDiemSo());
+                        wordsLearned += Math.max(0, h.getSoCauDung());
+                        accuracySum += Math.max(0, h.getDiemSo());
+                        if (h.getNgayLamBai() != null) days.add(df.format(h.getNgayLamBai()));
                     }
                     streak = days.size();
-                    int avgAcc = list.isEmpty() ? 0 : Math.round((float) accuracySum / list.size());
+                    int avgAcc = list.isEmpty() ? 0 : Math.round(accuracySum / list.size());
                     if (tvStreak != null) tvStreak.setText(streak + " ngày");
                     if (tvXp != null) tvXp.setText(String.valueOf(xp));
                     if (tvWords != null) tvWords.setText(String.valueOf(wordsLearned));
                     if (tvAccuracy != null) tvAccuracy.setText(avgAcc + "%");
 
-                    // Resolve topic names for history rows
                     Set<String> ids = new HashSet<>();
                     for (LichSuLamBai h : list) {
-                        if (h.maChuDe != null) ids.add(h.maChuDe);
+                        if (h.getMaChuDe() != null) ids.add(h.getMaChuDe());
                     }
                     Map<String, String> nameMap = new HashMap<>();
                     for (String id : ids) {
@@ -109,4 +111,3 @@ public class StatsFragment extends Fragment {
         });
     }
 }
-

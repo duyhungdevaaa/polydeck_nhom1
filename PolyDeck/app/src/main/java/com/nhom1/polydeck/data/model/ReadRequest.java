@@ -1,12 +1,20 @@
 package com.nhom1.polydeck.data.model;
 
-public class ReadRequest {
-    private String ma_nguoi_dung;
+import com.google.gson.annotations.SerializedName;
 
-    public ReadRequest(String maNguoiDung) {
-        this.ma_nguoi_dung = maNguoiDung;
+public class ReadRequest {
+    @SerializedName("userId")
+    private String userId;
+
+    public ReadRequest(String userId) {
+        this.userId = userId;
+    }
+
+    public String getUserId() {
+        return userId;
+    }
+
+    public void setUserId(String userId) {
+        this.userId = userId;
     }
 }
-
-
-

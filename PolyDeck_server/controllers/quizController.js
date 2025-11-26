@@ -1,76 +1,93 @@
 const BaiQuiz = require('../models/BaiQuiz');
-const CauHoi = require('../models/CauHoi');
 const LichSuLamBai = require('../models/LichSuLamBai');
-
-const mongoose = require('mongoose');
+const NguoiDung = require('../models/NguoiDung');
 const ChuDe = require('../models/ChuDe');
 
-// GET /api/quizzes/by-topic/:ma_chu_de
+// --- "Đầu bếp" 1: LẤY BÀI QUIZ THEO CHỦ ĐỀ ---
 const getQuizByTopic = async (req, res) => {
-  try {
-    let { ma_chu_de } = req.params;
-    // Accept both ObjectId and ma_chu_de
-    if (mongoose.Types.ObjectId.isValid(ma_chu_de)) {
-      const chuDe = await ChuDe.findById(ma_chu_de).lean();
-      if (chuDe) ma_chu_de = chuDe.ma_chu_de;
-    }
-    const quiz = await BaiQuiz.findOne({ ma_chu_de }).sort({ createdAt: -1 }).lean();
-    if (!quiz) return res.status(404).json({ success: false, message: 'Chưa có quiz cho chủ đề này' });
+    try {
+        const { ma_chu_de } = req.params;
+        const quiz = await BaiQuiz.findOne({ ma_chu_de });
 
-    const questions = await CauHoi.find({ ma_quiz: quiz.ma_quiz }).select('-__v -updatedAt').lean();
-    res.json({ success: true, data: { quiz, questions } });
-  } catch (e) {
-    res.status(500).json({ success: false, message: e.message });
-  }
+        if (!quiz || quiz.questions.length === 0) {
+            return res.status(404).json({ message: 'Không tìm thấy bài quiz cho chủ đề này.' });
+        }
+        const quizForStudent = JSON.parse(JSON.stringify(quiz));
+        quizForStudent.questions.forEach(question => {
+            question.answers.forEach(answer => {
+                delete answer.isCorrect;
+            });
+        });
+        res.status(200).json(quizForStudent);
+    } catch (error) {
+        console.error('Lỗi khi lấy bài quiz:', error);
+        res.status(500).json({ message: 'Lỗi server' });
+    }
 };
 
-// POST /api/quizzes/submit
-// body: { ma_nguoi_dung, ma_quiz, ma_chu_de, answers: [{ ma_cau_hoi, ma_lua_chon }], thoi_gian_lam_bai }
+// --- "Đầu bếp" 2: NỘP BÀI VÀ CHẤM ĐIỂM ---
 const submitQuiz = async (req, res) => {
-  try {
-    const { ma_nguoi_dung, ma_quiz, ma_chu_de, answers = [], thoi_gian_lam_bai = 0 } = req.body || {};
-    if (!ma_nguoi_dung || !ma_quiz || !ma_chu_de) {
-      return res.status(400).json({ success: false, message: 'Thiếu dữ liệu bắt buộc' });
+    try {
+        const { ma_nguoi_dung, ma_quiz, userAnswers } = req.body;
+        if (!ma_nguoi_dung || !ma_quiz || !userAnswers) {
+            return res.status(400).json({ message: 'Thiếu thông tin bài làm.' });
+        }
+        const correctQuiz = await BaiQuiz.findById(ma_quiz);
+        if (!correctQuiz) {
+            return res.status(404).json({ message: 'Không tìm thấy bài quiz.' });
+        }
+        let score = 0;
+        const totalQuestions = correctQuiz.questions.length;
+        correctQuiz.questions.forEach((correctQuestion, index) => {
+            const correctAnswer = correctQuestion.answers.find(answer => answer.isCorrect);
+            const userAnswer = userAnswers[index];
+            if (userAnswer && correctAnswer && userAnswer.selectedAnswerText === correctAnswer.answerText) {
+                score++;
+            }
+        });
+        const finalScore = (score / totalQuestions) * 100;
+        const newHistory = new LichSuLamBai({
+            ma_nguoi_dung,
+            ma_quiz,
+            ma_chu_de: correctQuiz.ma_chu_de,
+            diem_so: Math.round(finalScore),
+            so_cau_dung: score,
+            tong_so_cau: totalQuestions,
+        });
+        await newHistory.save();
+        await NguoiDung.updateOne({ ma_nguoi_dung }, { $inc: { diem_tich_luy: Math.round(finalScore) } });
+        res.status(200).json({
+            message: 'Nộp bài thành công!',
+            diem_so: Math.round(finalScore),
+            so_cau_dung: score,
+            tong_so_cau: totalQuestions,
+        });
+    } catch (error) {
+        console.error('Lỗi khi nộp bài:', error);
+        res.status(500).json({ message: 'Lỗi server' });
     }
-
-    const allQuestions = await CauHoi.find({ ma_quiz }).lean();
-    const answerMap = new Map(answers.map(a => [a.ma_cau_hoi, a.ma_lua_chon]));
-
-    let correct = 0;
-    for (const q of allQuestions) {
-      const chosen = answerMap.get(q.ma_cau_hoi);
-      if (chosen && chosen === q.dap_an_dung) correct++;
-    }
-    const total = allQuestions.length || 1;
-    const scorePercent = Math.round((correct / total) * 100);
-
-    const history = new LichSuLamBai({
-      ma_lich_su: `HIS_${Date.now()}`,
-      ma_nguoi_dung,
-      ma_quiz,
-      ma_chu_de,
-      diem_so: scorePercent,
-      diem_danh_duoc: correct,
-      thoi_gian_lam_bai
-    });
-    await history.save();
-
-    res.json({ success: true, data: { scorePercent, correct, total } });
-  } catch (e) {
-    res.status(500).json({ success: false, message: e.message });
-  }
 };
 
-// GET /api/quizzes/history/:ma_nguoi_dung
+// --- "Đầu bếp" 3: LẤY LỊCH SỬ LÀM BÀI CỦA NGƯỜI DÙNG ---
 const getHistoryByUser = async (req, res) => {
-  try {
-    const { ma_nguoi_dung } = req.params;
-    const items = await LichSuLamBai.find({ ma_nguoi_dung }).sort({ createdAt: -1 }).lean();
-    res.json({ success: true, data: items });
-  } catch (e) {
-    res.status(500).json({ success: false, message: e.message });
-  }
+    try {
+        const { ma_nguoi_dung } = req.params;
+        const history = await LichSuLamBai.find({ ma_nguoi_dung })
+            .populate({
+                path: 'ma_chu_de',
+                select: 'ten_chu_de link_anh_icon'
+            })
+            .sort({ ngay_lam_bai: -1 });
+        res.status(200).json(history);
+    } catch (error) {
+        console.error('Lỗi khi lấy lịch sử:', error);
+        res.status(500).json({ message: 'Lỗi server' });
+    }
 };
 
-module.exports = { getQuizByTopic, submitQuiz, getHistoryByUser };
-
+// <<< FIX: Chỉ export một object chứa các hàm controller >>>
+module.exports = {
+    getQuizByTopic,
+    submitQuiz,
+    getHistoryByUser
+};

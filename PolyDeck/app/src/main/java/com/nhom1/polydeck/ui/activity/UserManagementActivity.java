@@ -27,8 +27,7 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-// FIX: Implement the callback interface from the adapter
-public class UserManagementActivity extends AppCompatActivity implements UserAdapter.OnUserStatusChangedListener {
+public class UserManagementActivity extends AppCompatActivity {
 
     private static final String TAG = "UserManagementActivity";
 
@@ -55,6 +54,7 @@ public class UserManagementActivity extends AppCompatActivity implements UserAda
     @Override
     protected void onResume() {
         super.onResume();
+        // FIX: Fetch data every time the activity is resumed to see changes
         fetchUsers();
     }
 
@@ -77,7 +77,6 @@ public class UserManagementActivity extends AppCompatActivity implements UserAda
 
     private void setupRecyclerView() {
         rvUsers.setLayoutManager(new LinearLayoutManager(this));
-        // Pass 'this' as the listener
         userAdapter = new UserAdapter(this, new ArrayList<>());
         rvUsers.setAdapter(userAdapter);
     }
@@ -133,16 +132,10 @@ public class UserManagementActivity extends AppCompatActivity implements UserAda
         userAdapter.updateData(filteredList);
     }
 
-    public void updateStats() {
+    private void updateStats() {
         long activeCount = fullUserList.stream().filter(u -> "active".equalsIgnoreCase(u.getTrangThai())).count();
         long bannedCount = fullUserList.stream().filter(u -> "banned".equalsIgnoreCase(u.getTrangThai())).count();
         tvTotalUsers.setText(String.format("%d Hoạt động", activeCount));
         tvBannedUsers.setText(String.format("%d Bị khóa", bannedCount));
-    }
-
-    // FIX: Implement the method from the interface to update stats
-    @Override
-    public void onStatusChanged() {
-        updateStats();
     }
 }

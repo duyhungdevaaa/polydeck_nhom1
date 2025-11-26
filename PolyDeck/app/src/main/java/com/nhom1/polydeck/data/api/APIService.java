@@ -3,12 +3,19 @@ package com.nhom1.polydeck.data.api;
 import com.nhom1.polydeck.data.model.AdminStats;
 import com.nhom1.polydeck.data.model.ApiResponse;
 import com.nhom1.polydeck.data.model.BoTu;
+import com.nhom1.polydeck.data.model.ChangePasswordRequest;
 import com.nhom1.polydeck.data.model.ForgotPasswordRequest;
 import com.nhom1.polydeck.data.model.GoogleLoginRequest;
+import com.nhom1.polydeck.data.model.LichSuLamBai;
 import com.nhom1.polydeck.data.model.LoginRequest;
 import com.nhom1.polydeck.data.model.LoginResponse;
+import com.nhom1.polydeck.data.model.Quiz;
+import com.nhom1.polydeck.data.model.QuizBundle;
+import com.nhom1.polydeck.data.model.QuizResult;
+import com.nhom1.polydeck.data.model.ReadRequest;
 import com.nhom1.polydeck.data.model.RegisterRequest;
 import com.nhom1.polydeck.data.model.RegisterResponse;
+import com.nhom1.polydeck.data.model.SubmitQuizRequest;
 import com.nhom1.polydeck.data.model.ThongBao;
 import com.nhom1.polydeck.data.model.TuVung;
 import com.nhom1.polydeck.data.model.User;
@@ -32,20 +39,25 @@ public interface APIService {
     @POST("api/auth/google")
     Call<ApiResponse<LoginResponse>> googleLogin(@Body GoogleLoginRequest request);
 
+    @POST("api/auth/change-password")
+    Call<ApiResponse<Void>> changePassword(@Body ChangePasswordRequest request);
+
     @POST("api/auth/forgot-password")
     Call<ApiResponse<Void>> forgotPassword(@Body ForgotPasswordRequest request);
 
-    @POST("api/auth/change-password")
-    Call<ApiResponse<Void>> changePassword(@Body com.nhom1.polydeck.data.model.ChangePasswordRequest request);
-
-
-    // ============= ADMIN DASHBOARD =============
+    // ============= ADMIN =============
     @GET("api/admin/stats")
     Call<AdminStats> getAdminStats();
 
     @POST("api/admin/thong-bao")
     Call<Void> createSystemNotification(@Body ThongBao thongBao);
 
+    // ============= NOTIFICATIONS =============
+    @GET("api/thongbao/{userId}")
+    Call<ApiResponse<List<ThongBao>>> getThongBao(@Path("userId") String userId);
+
+    @POST("api/thongbao/{id}/read")
+    Call<ApiResponse<Void>> markThongBaoRead(@Path("id") String thongBaoId, @Body ReadRequest request);
 
     // ============= USER MANAGEMENT =============
     @GET("api/users")
@@ -63,8 +75,7 @@ public interface APIService {
     @PUT("api/users/{id}/block")
     Call<Void> blockUser(@Path("id") String userId);
 
-
-    // ============= DECK (CHUDE) MANAGEMENT =============
+    // ============= DECK (CHU DE) MANAGEMENT =============
     @GET("api/chude")
     Call<List<BoTu>> getAllChuDe();
 
@@ -77,12 +88,9 @@ public interface APIService {
     @POST("api/chude")
     Call<BoTu> createChuDe(@Body BoTu boTu);
 
-
-    // Add Deck with Image
     @Multipart
     @POST("api/chude/chude_with_image")
-    Call<BoTu> createChuDeWithImage(@Part MultipartBody.Part file,
-                                    @Part("ten_chu_de") RequestBody tenChuDe);
+    Call<BoTu> createChuDeWithImage(@Part MultipartBody.Part file, @Part("ten_chu_de") RequestBody tenChuDe);
 
     @PUT("api/chude/{id}")
     Call<BoTu> updateChuDe(@Path("id") String chuDeId, @Body BoTu boTu);
@@ -90,29 +98,27 @@ public interface APIService {
     @DELETE("api/chude/{id}")
     Call<Void> deleteChuDe(@Path("id") String chuDeId);
 
-
-    // ============= VOCABULARY =============
+    // ============= VOCABULARY MANAGEMENT =============
     @POST("api/chude/{chuDeId}/them-tu-vung")
     Call<TuVung> addTuVungToChuDe(@Path("chuDeId") String chuDeId, @Body TuVung tuVung);
 
     @GET("api/chude/{chuDeId}/tuvung")
     Call<List<TuVung>> getTuVungByBoTu(@Path("chuDeId") String chuDeId);
 
+    @POST("api/chude/{chuDeId}/import-vocab")
+    Call<Void> importVocab(@Path("chuDeId") String chuDeId, @Body List<TuVung> vocabList);
 
-    // ============= NOTIFICATIONS =============
-    @GET("api/thongbao")
-    Call<ApiResponse<List<ThongBao>>> getThongBao(@Query("ma_nguoi_dung") String maNguoiDung);
+    // ============= QUIZ MANAGEMENT =============
+    @POST("api/quizzes")
+    Call<Quiz> createQuiz(@Body Quiz quiz);
 
-    @POST("api/thongbao/{id}/read")
-    Call<ApiResponse<Void>> markThongBaoRead(@Path("id") String thongBaoId, @Body com.nhom1.polydeck.data.model.ReadRequest body);
+    @GET("api/quiz/by-topic/{ma_chu_de}")
+    Call<ApiResponse<QuizBundle>> getQuizByTopic(@Path("ma_chu_de") String deckId);
 
-    // ============= QUIZ =============
-    @GET("api/quizzes/by-topic/{ma_chu_de}")
-    Call<ApiResponse<com.nhom1.polydeck.data.model.QuizBundle>> getQuizByTopic(@Path("ma_chu_de") String maChuDe);
+    @POST("api/quiz/submit")
+    Call<ApiResponse<QuizResult>> submitQuiz(@Body SubmitQuizRequest request);
 
-    @POST("api/quizzes/submit")
-    Call<ApiResponse<com.nhom1.polydeck.data.model.QuizResult>> submitQuiz(@Body com.nhom1.polydeck.data.model.SubmitQuizRequest request);
-
-    @GET("api/quizzes/history/{ma_nguoi_dung}")
-    Call<ApiResponse<List<com.nhom1.polydeck.data.model.LichSuLamBai>>> getQuizHistory(@Path("ma_nguoi_dung") String maNguoiDung);
+    // FIX: Added the missing getQuizHistory method
+    @GET("api/quiz/history/{userId}")
+    Call<ApiResponse<List<LichSuLamBai>>> getQuizHistory(@Path("userId") String userId);
 }
