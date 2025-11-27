@@ -35,6 +35,16 @@ public class VocabularyAdapter extends RecyclerView.Adapter<VocabularyAdapter.Vo
         holder.tvEnglish.setText(vocab.getTuTiengAnh());
         holder.tvPronunciation.setText(vocab.getPhienAm());
         holder.tvVietnamese.setText(vocab.getNghiaTiengViet());
+        TextView tvExample = holder.itemView.findViewById(R.id.tvVocabExample);
+        if (tvExample != null) {
+            String ex = vocab.getCauViDu();
+            if (ex != null && !ex.trim().isEmpty()) {
+                tvExample.setText("\"" + ex + "\"");
+                tvExample.setVisibility(View.VISIBLE);
+            } else {
+                tvExample.setVisibility(View.GONE);
+            }
+        }
     }
 
     @Override
