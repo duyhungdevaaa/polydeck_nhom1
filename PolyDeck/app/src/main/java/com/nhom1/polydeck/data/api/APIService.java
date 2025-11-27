@@ -19,6 +19,7 @@ import com.nhom1.polydeck.data.model.SubmitQuizRequest;
 import com.nhom1.polydeck.data.model.ThongBao;
 import com.nhom1.polydeck.data.model.TuVung;
 import com.nhom1.polydeck.data.model.User;
+import com.nhom1.polydeck.data.model.FavoriteRequest;
 
 import java.util.List;
 
@@ -75,7 +76,18 @@ public interface APIService {
     @PUT("api/users/{id}/block")
     Call<Void> blockUser(@Path("id") String userId);
 
-    // ============= DECK (CHU DE) MANAGEMENT =============
+    // Favorites
+    @GET("api/users/{id}/favorites")
+    Call<ApiResponse<List<TuVung>>> getUserFavorites(@Path("id") String userId);
+
+    @POST("api/users/{id}/favorites")
+    Call<ApiResponse<Void>> addFavorite(@Path("id") String userId, @Body FavoriteRequest body);
+
+    @DELETE("api/users/{id}/favorites/{fav}")
+    Call<ApiResponse<Void>> removeFavorite(@Path("id") String userId, @Path("fav") String favId);
+
+
+    // ============= DECK (CHUDE) MANAGEMENT =============
     @GET("api/chude")
     Call<List<BoTu>> getAllChuDe();
 

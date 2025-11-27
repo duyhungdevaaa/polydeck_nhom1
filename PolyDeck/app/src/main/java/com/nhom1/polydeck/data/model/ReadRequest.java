@@ -14,7 +14,4 @@ public class ReadRequest {
         return userId;
     }
 
-    public void setUserId(String userId) {
-        this.userId = userId;
-    }
-}
+

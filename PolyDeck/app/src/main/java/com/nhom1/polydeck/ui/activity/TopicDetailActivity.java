@@ -2,7 +2,9 @@ package com.nhom1.polydeck.ui.activity;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.widget.Button;
+import android.widget.ImageButton;
+import android.widget.ProgressBar;
+import android.view.View;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -30,6 +32,8 @@ public class TopicDetailActivity extends AppCompatActivity {
 
     private APIService apiService;
     private VocabularyAdapter vocabAdapter;
+    private TextView tvProgressPercent, tvCounts;
+    private ProgressBar progressXp;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -44,10 +48,15 @@ public class TopicDetailActivity extends AppCompatActivity {
         apiService = RetrofitClient.getApiService();
 
         TextView tvTitle = findViewById(R.id.tv_title);
+        tvCounts = findViewById(R.id.tv_counts);
+        tvProgressPercent = findViewById(R.id.tv_progress_percent);
+        progressXp = findViewById(R.id.progress_xp);
+        ImageButton btnBack = findViewById(R.id.btn_back);
         tvTitle.setText(deckName);
+        btnBack.setOnClickListener(v -> onBackPressed());
 
-        Button btnFlashcard = findViewById(R.id.btn_flashcard);
-        Button btnQuiz = findViewById(R.id.btn_quiz);
+        View btnFlashcard = findViewById(R.id.btn_flashcard);
+        View btnQuiz = findViewById(R.id.btn_quiz);
         RecyclerView rv = findViewById(R.id.rv_preview_vocab);
         rv.setLayoutManager(new LinearLayoutManager(this));
         vocabAdapter = new VocabularyAdapter(new ArrayList<>());
@@ -80,6 +89,16 @@ public class TopicDetailActivity extends AppCompatActivity {
                     List<TuVung> all = response.body();
                     List<TuVung> preview = all.size() > 5 ? all.subList(0, 5) : all;
                     vocabAdapter.updateData(preview);
+
+                    // Update counts/progress roughly based on loaded data (placeholder logic)
+                    int total = all.size();
+                    int learned = Math.max(0, Math.min(total, total / 2));
+                    if (tvCounts != null) {
+                        tvCounts.setText(total + " từ • " + learned + " đã học");
+                    }
+                    int percent = total == 0 ? 0 : Math.round(learned * 100f / total);
+                    if (tvProgressPercent != null) tvProgressPercent.setText(percent + "%");
+                    if (progressXp != null) progressXp.setProgress(percent);
                 }
             }
             @Override
@@ -87,6 +106,7 @@ public class TopicDetailActivity extends AppCompatActivity {
         });
     }
 }
+
 
 
 
