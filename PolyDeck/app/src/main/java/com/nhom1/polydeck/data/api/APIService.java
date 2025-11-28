@@ -73,6 +73,10 @@ public interface APIService {
     @PUT("api/users/{id}")
     Call<User> updateUser(@Path("id") String userId, @Body User user);
 
+    @Multipart
+    @POST("api/users/{id}/upload-avatar")
+    Call<User> uploadUserAvatar(@Path("id") String userId, @Part MultipartBody.Part file);
+
     @PUT("api/users/{id}/block")
     Call<Void> blockUser(@Path("id") String userId);
 

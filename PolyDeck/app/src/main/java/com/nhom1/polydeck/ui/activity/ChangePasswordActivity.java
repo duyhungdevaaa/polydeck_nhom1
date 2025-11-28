@@ -258,30 +258,50 @@ public class ChangePasswordActivity extends AppCompatActivity {
                             String errorBody = response.errorBody().string();
                             android.util.Log.d("ChangePassword", "Error body: " + errorBody);
                             
-                            // Parse JSON error response
-                            if (errorBody.contains("Mật khẩu cũ không đúng") || errorBody.contains("mat_khau_cu")) {
-                                errorMessage = "Mật khẩu cũ không đúng";
-                                inputOldPassword.setError("Mật khẩu cũ không đúng");
-                                inputOldPassword.requestFocus();
-                            } else if (errorBody.contains("Email không tồn tại") || errorBody.contains("email")) {
-                                errorMessage = "Email không tồn tại";
-                            } else if (errorBody.contains("Mật khẩu mới phải khác")) {
-                                errorMessage = "Mật khẩu mới phải khác mật khẩu cũ";
-                                inputNewPassword.setError("Mật khẩu mới phải khác mật khẩu cũ");
-                                inputNewPassword.requestFocus();
-                            } else {
-                                // Try to extract message from JSON
-                                try {
-                                    com.google.gson.JsonObject jsonObject = new com.google.gson.Gson().fromJson(errorBody, com.google.gson.JsonObject.class);
-                                    if (jsonObject.has("message")) {
-                                        errorMessage = jsonObject.get("message").getAsString();
+                            // Try to parse JSON error response first
+                            try {
+                                com.google.gson.JsonObject jsonObject = new com.google.gson.Gson().fromJson(errorBody, com.google.gson.JsonObject.class);
+                                if (jsonObject.has("message")) {
+                                    errorMessage = jsonObject.get("message").getAsString();
+                                    
+                                    // Set specific error for old password
+                                    if (errorMessage.contains("Mật khẩu cũ không đúng")) {
+                                        inputOldPassword.setError("Mật khẩu cũ không đúng");
+                                        inputOldPassword.requestFocus();
+                                    } else if (errorMessage.contains("Mật khẩu mới phải khác")) {
+                                        inputNewPassword.setError("Mật khẩu mới phải khác mật khẩu cũ");
+                                        inputNewPassword.requestFocus();
+                                    } else if (errorMessage.contains("Email không tồn tại")) {
+                                        // Email error - no specific field to highlight
+                                    } else if (errorMessage.contains("Tài khoản này đăng nhập bằng Google")) {
+                                        // Google account error
                                     }
-                                } catch (Exception e) {
-                                    // Keep default message
+                                }
+                            } catch (Exception jsonException) {
+                                // If JSON parsing fails, try string matching
+                                if (errorBody.contains("Mật khẩu cũ không đúng") || errorBody.contains("mat_khau_cu")) {
+                                    errorMessage = "Mật khẩu cũ không đúng";
+                                    inputOldPassword.setError("Mật khẩu cũ không đúng");
+                                    inputOldPassword.requestFocus();
+                                } else if (errorBody.contains("Email không tồn tại")) {
+                                    errorMessage = "Email không tồn tại";
+                                } else if (errorBody.contains("Mật khẩu mới phải khác")) {
+                                    errorMessage = "Mật khẩu mới phải khác mật khẩu cũ";
+                                    inputNewPassword.setError("Mật khẩu mới phải khác mật khẩu cũ");
+                                    inputNewPassword.requestFocus();
+                                } else if (errorBody.contains("Cannot POST")) {
+                                    errorMessage = "Lỗi kết nối server. Vui lòng thử lại sau.";
                                 }
                             }
                         } catch (Exception e) {
                             android.util.Log.e("ChangePassword", "Error parsing error body", e);
+                        }
+                    } else {
+                        // No error body, check status code
+                        if (response.code() == 404) {
+                            errorMessage = "Không tìm thấy API. Vui lòng kiểm tra server.";
+                        } else if (response.code() == 500) {
+                            errorMessage = "Lỗi server. Vui lòng thử lại sau.";
                         }
                     }
                     Toast.makeText(ChangePasswordActivity.this, errorMessage, Toast.LENGTH_SHORT).show();

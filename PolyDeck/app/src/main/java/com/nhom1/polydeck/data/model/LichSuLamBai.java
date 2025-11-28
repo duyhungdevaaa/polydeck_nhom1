@@ -44,4 +44,44 @@ public class LichSuLamBai {
         this.maNguoiDung = maNguoiDung;
     }
 
+    public String getMaChuDe() {
+        return maChuDe;
+    }
+
+    public void setMaChuDe(String maChuDe) {
+        this.maChuDe = maChuDe;
+    }
+
+    public int getDiemSo() {
+        return diemSo;
+    }
+
+    public void setDiemSo(int diemSo) {
+        this.diemSo = diemSo;
+    }
+
+    public int getSoCauDung() {
+        return soCauDung;
+    }
+
+    public void setSoCauDung(int soCauDung) {
+        this.soCauDung = soCauDung;
+    }
+
+    public int getTongSoCau() {
+        return tongSoCau;
+    }
+
+    public void setTongSoCau(int tongSoCau) {
+        this.tongSoCau = tongSoCau;
+    }
+
+    public Date getNgayLamBai() {
+        return ngayLamBai;
+    }
+
+    public void setNgayLamBai(Date ngayLamBai) {
+        this.ngayLamBai = ngayLamBai;
+    }
+}
 

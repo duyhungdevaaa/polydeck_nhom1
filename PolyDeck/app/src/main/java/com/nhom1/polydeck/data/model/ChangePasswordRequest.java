@@ -2,13 +2,13 @@ package com.nhom1.polydeck.data.model;
 
 public class ChangePasswordRequest {
     public String email;
-    public String old_password;
-    public String new_password;
+    public String mat_khau_cu;
+    public String mat_khau_moi;
 
     public ChangePasswordRequest(String email, String oldPassword, String newPassword) {
         this.email = email;
-        this.old_password = oldPassword;
-        this.new_password = newPassword;
+        this.mat_khau_cu = oldPassword;
+        this.mat_khau_moi = newPassword;
     }
 }
 

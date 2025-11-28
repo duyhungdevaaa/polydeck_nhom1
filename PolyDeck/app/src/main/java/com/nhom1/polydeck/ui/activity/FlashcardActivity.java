@@ -1,10 +1,14 @@
 package com.nhom1.polydeck.ui.activity;
 
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
 import android.animation.ObjectAnimator;
 import android.animation.PropertyValuesHolder;
 import android.os.Bundle;
 import android.speech.tts.TextToSpeech;
 import android.view.View;
+import android.view.animation.DecelerateInterpolator;
+import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -43,12 +47,14 @@ public class FlashcardActivity extends AppCompatActivity {
     private int known = 0;
     private int unknown = 0;
 
-    private TextView tvProgress, tvWord, tvPron, tvMeaning, tvHint;
+    private TextView tvProgress, tvWord, tvPron, tvMeaning, tvHint, tvHintBack;
     private ProgressBar barProgress;
-    private View cardContainer;
-    private ImageButton btnSound, btnBack, btnFav;
+    private View cardView;
+    private FrameLayout cardFront, cardBack;
+    private ImageButton btnSound, btnSoundBack, btnBack, btnFav;
     private View btnKnown, btnUnknown;
     private TextToSpeech tts;
+    private boolean isFlipping = false;
 
     private String deckId;
     private String deckName;
@@ -78,9 +84,13 @@ public class FlashcardActivity extends AppCompatActivity {
         tvPron = findViewById(R.id.tv_pron);
         tvMeaning = findViewById(R.id.tv_meaning);
         tvHint = findViewById(R.id.tv_hint);
+        tvHintBack = findViewById(R.id.tv_hint_back);
         barProgress = findViewById(R.id.bar_progress);
-        cardContainer = findViewById(R.id.card_container);
+        cardView = findViewById(R.id.card_view);
+        cardFront = findViewById(R.id.card_front);
+        cardBack = findViewById(R.id.card_back);
         btnSound = findViewById(R.id.btn_sound);
+        btnSoundBack = findViewById(R.id.btn_sound_back);
         btnBack = findViewById(R.id.btn_back);
         btnFav = findViewById(R.id.btn_fav);
         btnKnown = findViewById(R.id.btn_known);
@@ -89,10 +99,8 @@ public class FlashcardActivity extends AppCompatActivity {
         btnBack.setOnClickListener(v -> onBackPressed());
         btnFav.setOnClickListener(v -> addFavorite());
         btnSound.setOnClickListener(v -> speak());
-        cardContainer.setOnClickListener(v -> {
-            showMeaning = !showMeaning;
-            render();
-        });
+        btnSoundBack.setOnClickListener(v -> speak());
+        cardView.setOnClickListener(v -> flipCard());
         btnKnown.setOnClickListener(v -> {
             known++;
             next();
@@ -186,6 +194,43 @@ public class FlashcardActivity extends AppCompatActivity {
         ObjectAnimator.ofPropertyValuesHolder(btnFav, sx, sy).setDuration(250).start();
     }
 
+    private void flipCard() {
+        if (isFlipping) return;
+        isFlipping = true;
+        showMeaning = !showMeaning;
+        
+        float currentRotation = cardView.getRotationY();
+        float targetRotation = showMeaning ? 180f : 0f;
+        boolean wasShowingFront = !showMeaning;
+        
+        ObjectAnimator flip = ObjectAnimator.ofFloat(cardView, "rotationY", currentRotation, targetRotation);
+        flip.setDuration(600);
+        flip.setInterpolator(new DecelerateInterpolator());
+        
+        flip.addListener(new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationStart(Animator animation) {
+                // Switch visibility at midpoint (90 degrees)
+                cardView.postDelayed(() -> {
+                    if (showMeaning) {
+                        cardBack.setVisibility(View.VISIBLE);
+                        cardFront.setVisibility(View.GONE);
+                    } else {
+                        cardFront.setVisibility(View.VISIBLE);
+                        cardBack.setVisibility(View.GONE);
+                    }
+                }, 300);
+            }
+            
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                isFlipping = false;
+            }
+        });
+        
+        flip.start();
+    }
+
     private void render() {
         int total = Math.max(1, cards.size());
         tvProgress.setText((Math.min(index + 1, total)) + "/" + total);
@@ -198,8 +243,12 @@ public class FlashcardActivity extends AppCompatActivity {
         tvPron.setText(c.getPhienAm() != null ? c.getPhienAm() : "");
         tvMeaning.setText(c.getNghiaTiengViet() != null ? c.getNghiaTiengViet() : "");
 
-        tvMeaning.setVisibility(showMeaning ? View.VISIBLE : View.INVISIBLE);
-        tvHint.setText(showMeaning ? "Nhấn để quay lại" : "Nhấn để xem nghĩa");
+        // Reset card to front when new card is loaded
+        if (!showMeaning) {
+            cardFront.setVisibility(View.VISIBLE);
+            cardBack.setVisibility(View.GONE);
+            cardView.setRotationY(0f);
+        }
         updateFavIcon();
     }
 
