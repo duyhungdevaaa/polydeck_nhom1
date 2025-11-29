@@ -2,10 +2,15 @@ package com.nhom1.polydeck.ui.activity;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.view.LayoutInflater;
 import android.widget.ImageButton;
 import android.widget.ProgressBar;
 import android.view.View;
 import android.widget.TextView;
+import android.widget.Toast;
+
+import androidx.appcompat.app.AlertDialog;
+import androidx.cardview.widget.CardView;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -17,6 +22,7 @@ import com.nhom1.polydeck.data.api.APIService;
 import com.nhom1.polydeck.data.api.RetrofitClient;
 import com.nhom1.polydeck.data.model.TuVung;
 import com.nhom1.polydeck.ui.adapter.VocabularyAdapter;
+import com.nhom1.polydeck.utils.LearningStatusManager;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -32,8 +38,9 @@ public class TopicDetailActivity extends AppCompatActivity {
 
     private APIService apiService;
     private VocabularyAdapter vocabAdapter;
-    private TextView tvProgressPercent, tvCounts;
+    private TextView tvProgressPercent, tvCounts, tvUnknownCount;
     private ProgressBar progressXp;
+    private LearningStatusManager learningStatusManager;
 
     private String deckId;
 
@@ -48,10 +55,12 @@ public class TopicDetailActivity extends AppCompatActivity {
         if (deckName == null) deckName = "";
 
         apiService = RetrofitClient.getApiService();
+        learningStatusManager = new LearningStatusManager(this);
 
         TextView tvTitle = findViewById(R.id.tv_title);
         tvCounts = findViewById(R.id.tv_counts);
         tvProgressPercent = findViewById(R.id.tv_progress_percent);
+        tvUnknownCount = findViewById(R.id.tv_unknown_count);
         progressXp = findViewById(R.id.progress_xp);
         ImageButton btnBack = findViewById(R.id.btn_back);
         tvTitle.setText(deckName);
@@ -59,6 +68,7 @@ public class TopicDetailActivity extends AppCompatActivity {
 
         View btnFlashcard = findViewById(R.id.btn_flashcard);
         View btnQuiz = findViewById(R.id.btn_quiz);
+        TextView btnManageStatus = findViewById(R.id.btn_manage_status);
         RecyclerView rv = findViewById(R.id.rv_preview_vocab);
         rv.setLayoutManager(new LinearLayoutManager(this));
         vocabAdapter = new VocabularyAdapter(new ArrayList<>(), this);
@@ -67,10 +77,7 @@ public class TopicDetailActivity extends AppCompatActivity {
         String finalDeckId = deckId;
         String finalDeckName = deckName;
         btnFlashcard.setOnClickListener(v -> {
-            Intent i = new Intent(this, FlashcardActivity.class);
-            i.putExtra(FlashcardActivity.EXTRA_DECK_ID, finalDeckId);
-            i.putExtra(FlashcardActivity.EXTRA_DECK_NAME, finalDeckName);
-            startActivity(i);
+            showFlashcardModeDialog(finalDeckId, finalDeckName);
         });
 
         btnQuiz.setOnClickListener(v -> {
@@ -80,7 +87,15 @@ public class TopicDetailActivity extends AppCompatActivity {
             startActivity(i);
         });
 
+        btnManageStatus.setOnClickListener(v -> {
+            Intent i = new Intent(this, LearningStatusActivity.class);
+            i.putExtra(LearningStatusActivity.EXTRA_DECK_ID, finalDeckId);
+            i.putExtra(LearningStatusActivity.EXTRA_DECK_NAME, finalDeckName);
+            startActivity(i);
+        });
+
         loadPreview(deckId);
+        updateUnknownCount();
     }
 
     @Override
@@ -89,6 +104,18 @@ public class TopicDetailActivity extends AppCompatActivity {
         // Refresh vocabulary list when returning from AddVocabularyActivity
         if (deckId != null && !deckId.isEmpty()) {
             loadPreview(deckId);
+            updateUnknownCount();
+        }
+    }
+    
+    private void updateUnknownCount() {
+        if (deckId == null || deckId.isEmpty() || tvUnknownCount == null) return;
+        int unknownCount = learningStatusManager.getUnknownCount(deckId);
+        if (unknownCount > 0) {
+            tvUnknownCount.setText(unknownCount + " từ chưa nhớ");
+            tvUnknownCount.setVisibility(View.VISIBLE);
+        } else {
+            tvUnknownCount.setVisibility(View.GONE);
         }
     }
 
@@ -115,6 +142,61 @@ public class TopicDetailActivity extends AppCompatActivity {
             @Override
             public void onFailure(@NonNull Call<List<TuVung>> call, @NonNull Throwable t) { }
         });
+    }
+
+    private void showFlashcardModeDialog(String deckId, String deckName) {
+        int unknownCount = learningStatusManager.getUnknownCount(deckId);
+        
+        View dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_flashcard_mode, null);
+        
+        CardView cardAll = dialogView.findViewById(R.id.card_all);
+        CardView cardReview = dialogView.findViewById(R.id.card_review);
+        TextView tvReviewTitle = dialogView.findViewById(R.id.tv_review_title);
+        TextView tvReviewSubtitle = dialogView.findViewById(R.id.tv_review_subtitle);
+        
+        // Hiển thị card review nếu có từ chưa nhớ
+        if (unknownCount > 0) {
+            cardReview.setVisibility(View.VISIBLE);
+            tvReviewTitle.setText("Học lại từ chưa nhớ (" + unknownCount + " từ)");
+            tvReviewSubtitle.setText("Chỉ học lại các từ bạn chưa nhớ");
+        } else {
+            cardReview.setVisibility(View.GONE);
+        }
+        
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setView(dialogView);
+        builder.setCancelable(true);
+        
+        AlertDialog dialog = builder.create();
+        
+        // Click vào "Học tất cả"
+        cardAll.setOnClickListener(v -> {
+            Intent i = new Intent(this, FlashcardActivity.class);
+            i.putExtra(FlashcardActivity.EXTRA_DECK_ID, deckId);
+            i.putExtra(FlashcardActivity.EXTRA_DECK_NAME, deckName);
+            i.putExtra(FlashcardActivity.EXTRA_REVIEW_UNKNOWN_ONLY, false);
+            startActivity(i);
+            dialog.dismiss();
+        });
+        
+        // Click vào "Học lại từ chưa nhớ"
+        cardReview.setOnClickListener(v -> {
+            if (unknownCount > 0) {
+                Intent i = new Intent(this, FlashcardActivity.class);
+                i.putExtra(FlashcardActivity.EXTRA_DECK_ID, deckId);
+                i.putExtra(FlashcardActivity.EXTRA_DECK_NAME, deckName);
+                i.putExtra(FlashcardActivity.EXTRA_REVIEW_UNKNOWN_ONLY, true);
+                startActivity(i);
+                dialog.dismiss();
+            }
+        });
+        
+        dialog.show();
+        
+        // Làm tròn góc cho dialog
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+        }
     }
 }
 

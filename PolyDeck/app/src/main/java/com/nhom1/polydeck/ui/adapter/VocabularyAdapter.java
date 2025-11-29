@@ -1,6 +1,7 @@
 package com.nhom1.polydeck.ui.adapter;
 
 import android.content.Context;
+import android.speech.tts.TextToSpeech;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -8,6 +9,8 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import java.util.Locale;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
@@ -35,6 +38,7 @@ public class VocabularyAdapter extends RecyclerView.Adapter<VocabularyAdapter.Vo
     private final String userId;
     private final APIService apiService;
     private final Set<String> favoriteIds = new HashSet<>();
+    private TextToSpeech tts;
 
     public VocabularyAdapter(List<TuVung> vocabList, Context context) {
         this.vocabList = vocabList;
@@ -42,7 +46,16 @@ public class VocabularyAdapter extends RecyclerView.Adapter<VocabularyAdapter.Vo
         SessionManager sm = new SessionManager(context);
         this.userId = sm.getUserData() != null ? sm.getUserData().getMaNguoiDung() : null;
         this.apiService = RetrofitClient.getApiService();
+        initTts();
         loadFavorites();
+    }
+    
+    private void initTts() {
+        tts = new TextToSpeech(context, status -> {
+            if (status == TextToSpeech.SUCCESS) {
+                tts.setLanguage(Locale.US);
+            }
+        });
     }
 
     private void loadFavorites() {
@@ -106,6 +119,15 @@ public class VocabularyAdapter extends RecyclerView.Adapter<VocabularyAdapter.Vo
         } else {
             holder.btnFavorite.setColorFilter(context.getResources().getColor(R.color.gray_medium, null));
         }
+
+        // Speaker button click
+        holder.btnSpeak.setOnClickListener(v -> {
+            if (vocab.getTuTiengAnh() != null && !vocab.getTuTiengAnh().trim().isEmpty()) {
+                if (tts != null) {
+                    tts.speak(vocab.getTuTiengAnh(), TextToSpeech.QUEUE_FLUSH, null, "word");
+                }
+            }
+        });
 
         // Favorite button click
         holder.btnFavorite.setOnClickListener(v -> {
@@ -278,10 +300,18 @@ public class VocabularyAdapter extends RecyclerView.Adapter<VocabularyAdapter.Vo
         }
         notifyDataSetChanged();
     }
+    
+    public void cleanup() {
+        if (tts != null) {
+            tts.stop();
+            tts.shutdown();
+            tts = null;
+        }
+    }
 
     static class VocabViewHolder extends RecyclerView.ViewHolder {
         TextView tvEnglish, tvPronunciation, tvVietnamese;
-        ImageView btnFavorite;
+        ImageView btnFavorite, btnSpeak;
 
         public VocabViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -289,6 +319,7 @@ public class VocabularyAdapter extends RecyclerView.Adapter<VocabularyAdapter.Vo
             tvPronunciation = itemView.findViewById(R.id.tvVocabPronunciation);
             tvVietnamese = itemView.findViewById(R.id.tvVocabVietnamese);
             btnFavorite = itemView.findViewById(R.id.btnFavorite);
+            btnSpeak = itemView.findViewById(R.id.btnSpeak);
         }
     }
 }

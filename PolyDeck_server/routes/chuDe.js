@@ -114,7 +114,7 @@ router.post('/:chuDeId/them-tu-vung', async (req, res) => {
             return res.status(404).json({ message: 'Không tìm thấy chủ đề' });
         }
 
-        const { tu_tieng_anh, nghia_tieng_viet, phien_am, cau_vi_du, am_thanh } = req.body;
+        const { tu_tieng_anh, nghia_tieng_viet, phien_am, cau_vi_du } = req.body;
         if (!tu_tieng_anh || !nghia_tieng_viet) {
             return res.status(400).json({ message: 'Từ tiếng Anh và nghĩa tiếng Việt là bắt buộc.' });
         }
@@ -128,7 +128,6 @@ router.post('/:chuDeId/them-tu-vung', async (req, res) => {
             phien_am,
             nghia_tieng_viet,
             cau_vi_du: cau_vi_du || null,
-            am_thanh: am_thanh || null,
         });
 
         const newTuVung = await tuVung.save();
@@ -233,7 +232,7 @@ router.post('/:chuDeId/import-vocab', async (req, res) => {
 
         for (const vocabData of vocabList) {
             try {
-                const { tu_tieng_anh, nghia_tieng_viet, phien_am, cau_vi_du, am_thanh } = vocabData;
+                const { tu_tieng_anh, nghia_tieng_viet, phien_am, cau_vi_du } = vocabData;
                 
                 if (!tu_tieng_anh || !nghia_tieng_viet) {
                     failCount++;
@@ -247,7 +246,6 @@ router.post('/:chuDeId/import-vocab', async (req, res) => {
                     phien_am: phien_am ? phien_am.trim() : null,
                     nghia_tieng_viet: nghia_tieng_viet.trim(),
                     cau_vi_du: cau_vi_du ? cau_vi_du.trim() : null,
-                    am_thanh: am_thanh ? am_thanh.trim() : null,
                 });
 
                 await tuVung.save();

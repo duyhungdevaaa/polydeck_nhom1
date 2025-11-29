@@ -6,7 +6,6 @@ import android.animation.ObjectAnimator;
 import android.animation.PropertyValuesHolder;
 import android.animation.ValueAnimator;
 import android.animation.ValueAnimator.AnimatorUpdateListener;
-import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.speech.tts.TextToSpeech;
 import android.util.Log;
@@ -27,9 +26,11 @@ import com.nhom1.polydeck.data.api.RetrofitClient;
 import com.nhom1.polydeck.data.model.ApiResponse;
 import com.nhom1.polydeck.data.model.FavoriteRequest;
 import com.nhom1.polydeck.data.model.TuVung;
+import com.nhom1.polydeck.utils.LearningStatusManager;
 import com.nhom1.polydeck.utils.SessionManager;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
@@ -43,6 +44,7 @@ public class FlashcardActivity extends AppCompatActivity {
 
     public static final String EXTRA_DECK_ID = "EXTRA_DECK_ID";
     public static final String EXTRA_DECK_NAME = "EXTRA_DECK_NAME";
+    public static final String EXTRA_REVIEW_UNKNOWN_ONLY = "EXTRA_REVIEW_UNKNOWN_ONLY";
 
     private APIService api;
     private List<TuVung> cards = new ArrayList<>();
@@ -58,13 +60,15 @@ public class FlashcardActivity extends AppCompatActivity {
     private ImageButton btnSound, btnSoundBack, btnBack, btnFav;
     private View btnKnown, btnUnknown;
     private TextToSpeech tts;
-    private MediaPlayer mediaPlayer;
     private boolean isFlipping = false;
+    private boolean ttsReady = false;
 
     private String deckId;
     private String deckName;
     private String userId;
     private final Set<String> favoriteIds = new HashSet<>();
+    private LearningStatusManager learningStatusManager;
+    private boolean reviewUnknownOnly = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -74,8 +78,10 @@ public class FlashcardActivity extends AppCompatActivity {
         api = RetrofitClient.getApiService();
         deckId = getIntent().getStringExtra(EXTRA_DECK_ID);
         deckName = getIntent().getStringExtra(EXTRA_DECK_NAME);
+        reviewUnknownOnly = getIntent().getBooleanExtra(EXTRA_REVIEW_UNKNOWN_ONLY, false);
         SessionManager sm = new SessionManager(this);
         if (sm.getUserData() != null) userId = sm.getUserData().getMaNguoiDung();
+        learningStatusManager = new LearningStatusManager(this);
 
         bindViews();
         initTts();
@@ -106,14 +112,75 @@ public class FlashcardActivity extends AppCompatActivity {
 
         btnBack.setOnClickListener(v -> onBackPressed());
         btnFav.setOnClickListener(v -> addFavorite());
-        btnSound.setOnClickListener(v -> speak());
-        btnSoundBack.setOnClickListener(v -> speak());
+        
+        // Icon loa - đảm bảo nhận click event trước cardView
+        if (btnSound != null) {
+            btnSound.setOnClickListener(v -> {
+                Log.d("FlashcardActivity", "btnSound clicked - calling speak()");
+                speak();
+            });
+            // Consume tất cả touch events để ngăn cardView nhận click
+            btnSound.setOnTouchListener((v, event) -> {
+                int action = event.getAction();
+                if (action == android.view.MotionEvent.ACTION_UP || action == android.view.MotionEvent.ACTION_DOWN) {
+                    Log.d("FlashcardActivity", "btnSound touch event: " + action);
+                    if (action == android.view.MotionEvent.ACTION_UP) {
+                        v.performClick();
+                    }
+                    return true; // Consume tất cả events
+                }
+                return true;
+            });
+            btnSound.setClickable(true);
+            btnSound.setFocusable(true);
+            btnSound.bringToFront();
+            Log.d("FlashcardActivity", "btnSound initialized");
+        } else {
+            Log.e("FlashcardActivity", "btnSound is null!");
+        }
+        
+        if (btnSoundBack != null) {
+            btnSoundBack.setOnClickListener(v -> {
+                Log.d("FlashcardActivity", "btnSoundBack clicked - calling speak()");
+                speak();
+            });
+            // Consume tất cả touch events để ngăn cardView nhận click
+            btnSoundBack.setOnTouchListener((v, event) -> {
+                int action = event.getAction();
+                if (action == android.view.MotionEvent.ACTION_UP || action == android.view.MotionEvent.ACTION_DOWN) {
+                    Log.d("FlashcardActivity", "btnSoundBack touch event: " + action);
+                    if (action == android.view.MotionEvent.ACTION_UP) {
+                        v.performClick();
+                    }
+                    return true; // Consume tất cả events
+                }
+                return true;
+            });
+            btnSoundBack.setClickable(true);
+            btnSoundBack.setFocusable(true);
+            btnSoundBack.bringToFront();
+            Log.d("FlashcardActivity", "btnSoundBack initialized");
+        } else {
+            Log.e("FlashcardActivity", "btnSoundBack is null!");
+        }
+        
+        // Xử lý click vào card để flip
         cardView.setOnClickListener(v -> flipCard());
         btnKnown.setOnClickListener(v -> {
+            TuVung current = getCurrent();
+            if (current != null && current.getId() != null) {
+                learningStatusManager.markAsKnown(deckId, current.getId());
+                Toast.makeText(this, "Đã lưu: Đã nhớ", Toast.LENGTH_SHORT).show();
+            }
             known++;
             next();
         });
         btnUnknown.setOnClickListener(v -> {
+            TuVung current = getCurrent();
+            if (current != null && current.getId() != null) {
+                learningStatusManager.markAsUnknown(deckId, current.getId());
+                Toast.makeText(this, "Đã lưu: Chưa nhớ (sẽ học lại)", Toast.LENGTH_SHORT).show();
+            }
             unknown++;
             next();
         });
@@ -122,75 +189,140 @@ public class FlashcardActivity extends AppCompatActivity {
     private void initTts() {
         tts = new TextToSpeech(this, status -> {
             if (status == TextToSpeech.SUCCESS) {
-                tts.setLanguage(Locale.US);
+                int result = tts.setLanguage(Locale.US);
+                if (result == TextToSpeech.LANG_MISSING_DATA) {
+                    Log.e("FlashcardActivity", "TTS Language data missing - need to install TTS engine");
+                    ttsReady = false;
+                    // Hướng dẫn người dùng cài đặt TTS engine
+                    runOnUiThread(() -> {
+                        Toast.makeText(this, "Cần cài đặt Text-to-Speech engine. Vui lòng cài Google TTS từ Play Store.", Toast.LENGTH_LONG).show();
+                    });
+                } else if (result == TextToSpeech.LANG_NOT_SUPPORTED) {
+                    Log.e("FlashcardActivity", "TTS Language not supported");
+                    ttsReady = false;
+                } else {
+                    Log.d("FlashcardActivity", "TTS initialized successfully");
+                    ttsReady = true;
+                }
+            } else {
+                Log.e("FlashcardActivity", "TTS initialization failed - status: " + status);
+                ttsReady = false;
+                runOnUiThread(() -> {
+                    Toast.makeText(this, "Text-to-Speech không khả dụng. Vui lòng kiểm tra cài đặt.", Toast.LENGTH_SHORT).show();
+                });
             }
         });
     }
 
     private void speak() {
+        Log.d("FlashcardActivity", "speak() called");
         TuVung c = getCurrent();
-        if (c == null) return;
+        if (c == null) {
+            Log.e("FlashcardActivity", "Current word is null");
+            Toast.makeText(this, "Không có từ để phát âm", Toast.LENGTH_SHORT).show();
+            return;
+        }
         
-        // Ưu tiên phát audio từ URL nếu có
-        String audioUrl = c.getAmThanh();
-        if (audioUrl != null && !audioUrl.trim().isEmpty()) {
-            playAudioFromUrl(audioUrl);
-        } else if (tts != null && c.getTuTiengAnh() != null) {
-            // Nếu không có audio URL, dùng TTS
-            tts.speak(c.getTuTiengAnh(), TextToSpeech.QUEUE_FLUSH, null, "word");
+        String word = c.getTuTiengAnh();
+        if (word == null || word.trim().isEmpty()) {
+            Log.e("FlashcardActivity", "Word text is empty");
+            Toast.makeText(this, "Từ vựng trống", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        
+        Log.d("FlashcardActivity", "Word to speak: " + word + ", TTS ready: " + ttsReady + ", TTS null: " + (tts == null));
+        
+        // Chỉ dùng TTS - không dùng link âm thanh để tránh delay
+        Log.d("FlashcardActivity", "Using TTS for instant playback");
+        speakWithTTS(word);
+    }
+    
+    private void speakWithTTS(String word) {
+        // Dùng TTS
+        if (tts == null) {
+            Log.d("FlashcardActivity", "TTS is null, initializing...");
+            initTts();
+            // Đợi một chút để TTS khởi tạo
+            new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(() -> {
+                if (ttsReady && tts != null) {
+                    speakWord(word);
+                } else {
+                    Log.e("FlashcardActivity", "TTS still not ready after initialization");
+                    Toast.makeText(this, "Text-to-Speech chưa sẵn sàng. Vui lòng thử lại.", Toast.LENGTH_SHORT).show();
+                }
+            }, 1000);
+        } else if (ttsReady) {
+            speakWord(word);
+        } else {
+            Log.d("FlashcardActivity", "TTS not ready yet, waiting...");
+            // Đợi TTS sẵn sàng
+            new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(() -> {
+                if (ttsReady && tts != null) {
+                    speakWord(word);
+                } else {
+                    Log.e("FlashcardActivity", "TTS still not ready");
+                    Toast.makeText(this, "Text-to-Speech chưa sẵn sàng. Vui lòng thử lại.", Toast.LENGTH_SHORT).show();
+                }
+            }, 1000);
         }
     }
     
-    private void playAudioFromUrl(String url) {
-        try {
-            // Dừng media player cũ nếu đang phát
-            if (mediaPlayer != null) {
-                mediaPlayer.release();
-                mediaPlayer = null;
-            }
-            
-            mediaPlayer = new MediaPlayer();
-            mediaPlayer.setDataSource(url);
-            mediaPlayer.prepareAsync();
-            
-            mediaPlayer.setOnPreparedListener(mp -> {
-                mp.start();
-            });
-            
-            mediaPlayer.setOnErrorListener((mp, what, extra) -> {
-                Log.e("FlashcardActivity", "MediaPlayer error: " + what + ", " + extra);
-                // Nếu phát audio thất bại, fallback về TTS
-                TuVung c = getCurrent();
-                if (tts != null && c != null && c.getTuTiengAnh() != null) {
-                    tts.speak(c.getTuTiengAnh(), TextToSpeech.QUEUE_FLUSH, null, "word");
-                }
-                return true;
-            });
-            
-            mediaPlayer.setOnCompletionListener(mp -> {
-                mp.release();
-                mediaPlayer = null;
-            });
-            
-        } catch (Exception e) {
-            Log.e("FlashcardActivity", "Error playing audio: " + e.getMessage());
-            // Fallback về TTS nếu có lỗi
-            TuVung c = getCurrent();
-            if (tts != null && c != null && c.getTuTiengAnh() != null) {
-                tts.speak(c.getTuTiengAnh(), TextToSpeech.QUEUE_FLUSH, null, "word");
-            }
+    // Không dùng audio URL nữa - chỉ dùng TTS
+    
+    private void speakWord(String word) {
+        if (tts == null) {
+            Log.e("FlashcardActivity", "TTS is still null");
+            Toast.makeText(this, "Không thể phát âm", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        
+        Log.d("FlashcardActivity", "Speaking with TTS: " + word);
+        // Dừng bất kỳ phát âm nào đang diễn ra
+        tts.stop();
+        int result = tts.speak(word, TextToSpeech.QUEUE_FLUSH, null, "word");
+        if (result == TextToSpeech.ERROR) {
+            Log.e("FlashcardActivity", "TTS speak error");
+            Toast.makeText(this, "Lỗi phát âm", Toast.LENGTH_SHORT).show();
+        } else {
+            Log.d("FlashcardActivity", "TTS speak started successfully");
         }
     }
+    
+    // Không dùng audio URL nữa - chỉ dùng TTS
 
     private void loadCards() {
         api.getTuVungByBoTu(deckId).enqueue(new Callback<List<TuVung>>() {
             @Override public void onResponse(@NonNull Call<List<TuVung>> call, @NonNull Response<List<TuVung>> response) {
                 if (response.isSuccessful() && response.body() != null) {
                     cards.clear();
-                    cards.addAll(response.body());
+                    List<TuVung> allCards = response.body();
+                    
+                    // Nếu chỉ học lại từ chưa nhớ, lọc danh sách
+                    if (reviewUnknownOnly) {
+                        Set<String> unknownWordIds = learningStatusManager.getUnknownWords(deckId);
+                        for (TuVung card : allCards) {
+                            if (card.getId() != null && unknownWordIds.contains(card.getId())) {
+                                cards.add(card);
+                            }
+                        }
+                        
+                        if (cards.isEmpty()) {
+                            Toast.makeText(FlashcardActivity.this, "Không có từ nào cần học lại!", Toast.LENGTH_SHORT).show();
+                            finish();
+                            return;
+                        }
+                    } else {
+                        cards.addAll(allCards);
+                    }
+                    
+                    // Xáo trộn danh sách từ vựng để học ngẫu nhiên
+                    Collections.shuffle(cards);
+                    
                     index = 0;
                     showMeaning = false;
                     render();
+                    
+                    // Không preload audio nữa vì chỉ dùng TTS
                 } else {
                     Toast.makeText(FlashcardActivity.this, "Không tải được thẻ từ", Toast.LENGTH_SHORT).show();
                     finish();
@@ -352,14 +484,11 @@ public class FlashcardActivity extends AppCompatActivity {
             return;
         }
         render();
+        // Không preload audio nữa vì chỉ dùng TTS
     }
 
     @Override
     protected void onDestroy() {
-        if (mediaPlayer != null) {
-            mediaPlayer.release();
-            mediaPlayer = null;
-        }
         if (tts != null) {
             tts.stop();
             tts.shutdown();

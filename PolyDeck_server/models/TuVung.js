@@ -6,7 +6,6 @@ const tuVungSchema = new mongoose.Schema({
   tu_tieng_anh: { type: String, required: true, trim: true },
   phien_am: { type: String, default: null },
   cau_vi_du: { type: String, default: null },
-  am_thanh: { type: String, default: null },
   nghia_tieng_viet: { type: String, required: true, trim: true }
 }, {
   timestamps: true,

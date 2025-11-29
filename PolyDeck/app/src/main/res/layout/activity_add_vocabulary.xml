@@ -181,30 +181,6 @@
                 android:textColorHint="#9CA3AF"
                 android:inputType="text"/>
 
-            <!-- Link âm thanh (Audio URL) -->
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:text="Link âm thanh (Audio URL)"
-                android:textSize="14sp"
-                android:textStyle="bold"
-                android:textColor="#111827"/>
-
-            <EditText
-                android:id="@+id/inputAudioURL"
-                android:layout_width="match_parent"
-                android:layout_height="48dp"
-                android:layout_marginTop="8dp"
-                android:hint="Ví dụ: https://link.to/audio.mp3"
-                android:background="@drawable/bg_input"
-                android:paddingStart="16dp"
-                android:paddingEnd="16dp"
-                android:textSize="15sp"
-                android:textColor="#111827"
-                android:textColorHint="#9CA3AF"
-                android:inputType="textUri"/>
-
             <!-- Nghĩa -->
             <TextView
                 android:layout_width="wrap_content"

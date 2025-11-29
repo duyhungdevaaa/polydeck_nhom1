@@ -19,13 +19,18 @@ import com.nhom1.polydeck.data.model.ApiResponse;
 import com.nhom1.polydeck.data.model.LichSuLamBai;
 import com.nhom1.polydeck.data.model.BoTu;
 import com.nhom1.polydeck.ui.adapter.HistoryAdapter;
+import com.nhom1.polydeck.utils.LearningStatusManager;
 import com.nhom1.polydeck.utils.SessionManager;
+import com.nhom1.polydeck.data.model.LoginResponse;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.Calendar;
+import java.util.Date;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -34,6 +39,7 @@ import retrofit2.Response;
 public class StatsFragment extends Fragment {
     private HistoryAdapter adapter;
     private TextView tvStreak, tvXp, tvWords, tvAccuracy;
+    private TextView tvWeeklyWords, tvWeeklyQuizzes, tvWeeklyDays, tvWeeklyXp;
 
     @Nullable
     @Override
@@ -48,6 +54,12 @@ public class StatsFragment extends Fragment {
         tvXp = view.findViewById(R.id.tv_xp);
         tvWords = view.findViewById(R.id.tv_words);
         tvAccuracy = view.findViewById(R.id.tv_accuracy);
+        
+        // Weekly stats
+        tvWeeklyWords = view.findViewById(R.id.tv_weekly_words);
+        tvWeeklyQuizzes = view.findViewById(R.id.tv_weekly_quizzes);
+        tvWeeklyDays = view.findViewById(R.id.tv_weekly_days);
+        tvWeeklyXp = view.findViewById(R.id.tv_weekly_xp);
 
         RecyclerView rv = view.findViewById(R.id.rv_history);
         rv.setLayoutManager(new LinearLayoutManager(requireContext()));
@@ -56,10 +68,19 @@ public class StatsFragment extends Fragment {
 
         APIService api = RetrofitClient.getApiService();
         SessionManager sm = new SessionManager(requireContext());
+        LearningStatusManager learningStatusManager = new LearningStatusManager(requireContext());
         
-        // FIX: Reverted to use getMaNguoiDung() as expected by the server schema
-        String userId = sm.getUserData() != null ? sm.getUserData().getMaNguoiDung() : null;
+        // Lấy thông tin user để có streak và XP chính xác
+        LoginResponse user = sm.getUserData();
+        String userId = user != null ? user.getMaNguoiDung() : null;
         if (userId == null) return;
+
+        // Cập nhật Streak và XP từ user data
+        int userStreak = user != null ? user.getChuoiNgayHoc() : 0;
+        int userXp = user != null ? user.getDiemTichLuy() : 0;
+        
+        if (tvStreak != null) tvStreak.setText(userStreak + " ngày");
+        if (tvXp != null) tvXp.setText(String.valueOf(userXp));
 
         api.getQuizHistory(userId).enqueue(new Callback<ApiResponse<List<LichSuLamBai>>>() {
             @Override public void onResponse(Call<ApiResponse<List<LichSuLamBai>>> call, Response<ApiResponse<List<LichSuLamBai>>> response) {
@@ -68,25 +89,62 @@ public class StatsFragment extends Fragment {
                     List<LichSuLamBai> list = response.body().getData();
                     adapter.setItems(list);
 
-                    int xp = 0;
-                    int streak = 0;
-                    int wordsLearned = 0;
-                    float accuracySum = 0;
-                    java.util.HashSet<String> days = new java.util.HashSet<>();
-                    java.text.SimpleDateFormat df = new java.text.SimpleDateFormat("yyyy-MM-dd");
+                    // Tính từ đã học từ quiz
+                    int wordsFromQuiz = 0;
+                    int totalCorrect = 0;
+                    int totalQuestions = 0;
+                    
                     for (LichSuLamBai h : list) {
-                        // FIX: Use the correct getter methods from the LichSuLamBai model
-                        xp += Math.max(50, h.getDiemSo());
-                        wordsLearned += Math.max(0, h.getSoCauDung());
-                        accuracySum += Math.max(0, h.getDiemSo());
-                        if (h.getNgayLamBai() != null) days.add(df.format(h.getNgayLamBai()));
+                        // Tổng từ đã học từ quiz = tổng số câu đúng
+                        wordsFromQuiz += Math.max(0, h.getSoCauDung());
+                        // Tính độ chính xác: tổng câu đúng / tổng câu hỏi
+                        totalCorrect += Math.max(0, h.getSoCauDung());
+                        totalQuestions += Math.max(1, h.getTongSoCau()); // Tránh chia 0
                     }
-                    streak = days.size();
-                    int avgAcc = list.isEmpty() ? 0 : Math.round(accuracySum / list.size());
-                    if (tvStreak != null) tvStreak.setText(streak + " ngày");
-                    if (tvXp != null) tvXp.setText(String.valueOf(xp));
-                    if (tvWords != null) tvWords.setText(String.valueOf(wordsLearned));
+                    
+                    // Tính độ chính xác trung bình: (tổng câu đúng / tổng câu hỏi) * 100
+                    int avgAcc = totalQuestions > 0 ? Math.round((totalCorrect * 100f) / totalQuestions) : 0;
+                    
                     if (tvAccuracy != null) tvAccuracy.setText(avgAcc + "%");
+                    
+                    // Tạo biến final để sử dụng trong inner class
+                    final int finalWordsFromQuiz = wordsFromQuiz;
+                    final List<LichSuLamBai> finalList = list;
+                    
+                    // Lấy tất cả deck để tính từ đã học từ flashcard
+                    api.getAllChuDe().enqueue(new Callback<List<BoTu>>() {
+                        @Override
+                        public void onResponse(Call<List<BoTu>> call, Response<List<BoTu>> response) {
+                            if (!isAdded()) return;
+                            if (response.isSuccessful() && response.body() != null) {
+                                // Tính từ đã học từ flashcard (từ đã nhớ)
+                                int wordsFromFlashcard = 0;
+                                for (BoTu deck : response.body()) {
+                                    if (deck.getId() != null) {
+                                        wordsFromFlashcard += learningStatusManager.getKnownCount(deck.getId());
+                                    }
+                                }
+                                
+                                // Tổng từ đã học = từ quiz + từ flashcard
+                                int totalWordsLearned = finalWordsFromQuiz + wordsFromFlashcard;
+                                if (tvWords != null) tvWords.setText(String.valueOf(totalWordsLearned));
+                                
+                                // Calculate weekly stats với tất cả deck
+                                calculateWeeklyStats(finalList, learningStatusManager, response.body());
+                            } else {
+                                // Nếu không lấy được deck, chỉ tính từ quiz
+                                if (tvWords != null) tvWords.setText(String.valueOf(finalWordsFromQuiz));
+                                calculateWeeklyStats(finalList, learningStatusManager, new ArrayList<>());
+                            }
+                        }
+                        
+                        @Override
+                        public void onFailure(Call<List<BoTu>> call, Throwable t) {
+                            // Nếu lỗi, chỉ tính từ quiz
+                            if (tvWords != null) tvWords.setText(String.valueOf(finalWordsFromQuiz));
+                            calculateWeeklyStats(finalList, learningStatusManager, new ArrayList<>());
+                        }
+                    });
 
                     Set<String> ids = new HashSet<>();
                     for (LichSuLamBai h : list) {
@@ -109,5 +167,62 @@ public class StatsFragment extends Fragment {
             }
             @Override public void onFailure(Call<ApiResponse<List<LichSuLamBai>>> call, Throwable t) { }
         });
+    }
+    
+    private void calculateWeeklyStats(List<LichSuLamBai> allHistory, LearningStatusManager learningStatusManager, List<BoTu> allDecks) {
+        // Get date 7 days ago (start of week)
+        Calendar calendar = Calendar.getInstance();
+        calendar.set(Calendar.HOUR_OF_DAY, 0);
+        calendar.set(Calendar.MINUTE, 0);
+        calendar.set(Calendar.SECOND, 0);
+        calendar.set(Calendar.MILLISECOND, 0);
+        calendar.add(Calendar.DAY_OF_YEAR, -7);
+        Date weekAgo = calendar.getTime();
+        
+        // Get today's date (end of day)
+        Calendar today = Calendar.getInstance();
+        today.set(Calendar.HOUR_OF_DAY, 23);
+        today.set(Calendar.MINUTE, 59);
+        today.set(Calendar.SECOND, 59);
+        today.set(Calendar.MILLISECOND, 999);
+        Date todayEnd = today.getTime();
+        
+        int weeklyWordsFromQuiz = 0;
+        int weeklyQuizzes = 0;
+        int weeklyXp = 0;
+        Set<String> weeklyDays = new HashSet<>();
+        Set<String> weeklyDeckIds = new HashSet<>();
+        java.text.SimpleDateFormat df = new java.text.SimpleDateFormat("yyyy-MM-dd");
+        
+        for (LichSuLamBai h : allHistory) {
+            if (h.getNgayLamBai() != null) {
+                Date quizDate = h.getNgayLamBai();
+                // Check if quiz is within the last 7 days (including today)
+                if ((quizDate.after(weekAgo) || quizDate.equals(weekAgo)) && 
+                    (quizDate.before(todayEnd) || quizDate.equals(todayEnd))) {
+                    weeklyQuizzes++;
+                    // Số từ đã học từ quiz = số câu đúng
+                    weeklyWordsFromQuiz += Math.max(0, h.getSoCauDung());
+                    // XP = điểm số từ quiz
+                    weeklyXp += Math.max(0, h.getDiemSo());
+                    weeklyDays.add(df.format(quizDate));
+                    if (h.getMaChuDe() != null) weeklyDeckIds.add(h.getMaChuDe());
+                }
+            }
+        }
+        
+        // Tính từ đã học từ flashcard trong tuần này (từ các deck có quiz trong tuần)
+        int weeklyWordsFromFlashcard = 0;
+        for (String deckId : weeklyDeckIds) {
+            weeklyWordsFromFlashcard += learningStatusManager.getKnownCount(deckId);
+        }
+        
+        int totalWeeklyWords = weeklyWordsFromQuiz + weeklyWordsFromFlashcard;
+        int weeklyDaysCount = weeklyDays.size();
+        
+        if (tvWeeklyWords != null) tvWeeklyWords.setText(String.valueOf(totalWeeklyWords));
+        if (tvWeeklyQuizzes != null) tvWeeklyQuizzes.setText(String.valueOf(weeklyQuizzes));
+        if (tvWeeklyDays != null) tvWeeklyDays.setText(weeklyDaysCount + "/7");
+        if (tvWeeklyXp != null) tvWeeklyXp.setText(String.valueOf(weeklyXp));
     }
 }

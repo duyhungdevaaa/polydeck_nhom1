@@ -25,19 +25,14 @@
 
             <TextView
                 android:id="@+id/tvVocabEnglish"
-                android:layout_width="wrap_content"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
+                android:layout_weight="1"
                 android:textColor="#1F2937"
                 android:textSize="20sp"
-                android:textStyle="bold" />
-
-            <ImageView
-                android:id="@+id/btnSpeak"
-                android:layout_width="20dp"
-                android:layout_height="20dp"
-                android:layout_marginStart="8dp"
-                android:src="@drawable/ic_volume"
-                android:tint="#7C3AED" />
+                android:textStyle="bold"
+                android:maxLines="2"
+                android:ellipsize="end" />
 
             <TextView
                 android:id="@+id/chipLearned"
@@ -51,12 +46,25 @@
                 android:text="Đã học"
                 android:textColor="#047857"
                 android:textSize="12sp"
-                android:background="@drawable/vocab_chip_learned_bg"/>
+                android:background="@drawable/vocab_chip_learned_bg"
+                android:visibility="gone"/>
 
             <Space
                 android:layout_width="0dp"
                 android:layout_height="0dp"
                 android:layout_weight="1" />
+
+            <ImageView
+                android:id="@+id/btnSpeak"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_marginEnd="12dp"
+                android:padding="2dp"
+                android:src="@drawable/ic_volume"
+                android:tint="#7C3AED"
+                android:clickable="true"
+                android:focusable="true"
+                android:background="?attr/selectableItemBackgroundBorderless" />
 
             <ImageView
                 android:id="@+id/btnFavorite"
@@ -68,19 +76,23 @@
 
         <TextView
             android:id="@+id/tvVocabPronunciation"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:textColor="#6B7280"
             android:textStyle="italic"
-            android:layout_marginTop="6dp"/>
+            android:layout_marginTop="6dp"
+            android:maxLines="2"
+            android:ellipsize="end"/>
 
         <TextView
             android:id="@+id/tvVocabVietnamese"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:textColor="#111827"
             android:textSize="16sp"
-            android:layout_marginTop="8dp"/>
+            android:layout_marginTop="8dp"
+            android:maxLines="3"
+            android:ellipsize="end"/>
 
         <!-- Example block with left accent -->
         <LinearLayout
@@ -101,7 +113,9 @@
                 android:layout_marginStart="8dp"
                 android:layout_weight="1"
                 android:textStyle="italic"
-                android:textColor="#6B7280"/>
+                android:textColor="#6B7280"
+                android:maxLines="3"
+                android:ellipsize="end"/>
         </LinearLayout>
 
     </LinearLayout>

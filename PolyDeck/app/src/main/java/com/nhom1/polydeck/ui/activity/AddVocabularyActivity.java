@@ -44,7 +44,7 @@ public class AddVocabularyActivity extends AppCompatActivity {
 
     private ImageView btnBack;
     private TextView btnImportExcel;
-    private EditText etEnglishWord, etPronunciation, etVietnameseMeaning, etExample, etAudioURL;
+    private EditText etEnglishWord, etPronunciation, etVietnameseMeaning, etExample;
     private Button btnAddVocabulary;
     private ImageView btnSaveAndExit;
     private ProgressBar importProgressBar;
@@ -108,7 +108,6 @@ public class AddVocabularyActivity extends AppCompatActivity {
         etPronunciation = findViewById(R.id.inputIPA);
         etVietnameseMeaning = findViewById(R.id.inputMeaning);
         etExample = findViewById(R.id.inputExample);
-        etAudioURL = findViewById(R.id.inputAudioURL);
         btnAddVocabulary = findViewById(R.id.btnAddWord);
         btnSaveAndExit = findViewById(R.id.btnSave);
         // You need to add a ProgressBar to your activity_add_vocabulary.xml
@@ -130,7 +129,6 @@ public class AddVocabularyActivity extends AppCompatActivity {
         String pronunciation = etPronunciation.getText().toString().trim();
         String vietnameseMeaning = etVietnameseMeaning.getText().toString().trim();
         String example = etExample.getText().toString().trim();
-        String audioURL = etAudioURL.getText().toString().trim();
 
         if (englishWord.isEmpty() || vietnameseMeaning.isEmpty()) {
             Toast.makeText(this, "Vui lòng nhập từ vựng và nghĩa", Toast.LENGTH_SHORT).show();
@@ -150,7 +148,6 @@ public class AddVocabularyActivity extends AppCompatActivity {
         vocab.setPhienAm(pronunciation);
         vocab.setNghiaTiengViet(vietnameseMeaning);
         vocab.setCauViDu(example.isEmpty() ? null : example);
-        vocab.setAmThanh(audioURL.isEmpty() ? null : audioURL);
 
         apiService.addTuVungToChuDe(deckId, vocab).enqueue(new Callback<TuVung>() {
             @Override
@@ -166,7 +163,6 @@ public class AddVocabularyActivity extends AppCompatActivity {
                     etPronunciation.setText("");
                     etVietnameseMeaning.setText("");
                     etExample.setText("");
-                    etAudioURL.setText("");
                     
                     if (shouldExit) {
                         finish();
@@ -282,14 +278,12 @@ public class AddVocabularyActivity extends AppCompatActivity {
         Cell cell2 = row.getCell(1); // Vietnamese meaning
         Cell cell3 = row.getCell(2); // Pronunciation (optional)
         Cell cell4 = row.getCell(3); // Example sentence (optional)
-        Cell cell5 = row.getCell(4); // Audio URL (optional)
 
         if (cell1 != null && cell2 != null) {
             String english = getCellValueAsString(cell1);
             String vietnamese = getCellValueAsString(cell2);
             String pronunciation = (cell3 != null) ? getCellValueAsString(cell3) : "";
             String example = (cell4 != null) ? getCellValueAsString(cell4) : "";
-            String audioURL = (cell5 != null) ? getCellValueAsString(cell5) : "";
 
             if (!english.trim().isEmpty() && !vietnamese.trim().isEmpty()) {
                 TuVung vocab = new TuVung();
@@ -297,7 +291,6 @@ public class AddVocabularyActivity extends AppCompatActivity {
                 vocab.setNghiaTiengViet(vietnamese.trim());
                 vocab.setPhienAm(pronunciation.trim().isEmpty() ? null : pronunciation.trim());
                 vocab.setCauViDu(example.trim().isEmpty() ? null : example.trim());
-                vocab.setAmThanh(audioURL.trim().isEmpty() ? null : audioURL.trim());
                 vocabList.add(vocab);
             }
         }
