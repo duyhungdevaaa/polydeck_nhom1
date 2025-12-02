@@ -3,7 +3,31 @@ const LichSuLamBai = require('../models/LichSuLamBai');
 const NguoiDung = require('../models/NguoiDung');
 const ChuDe = require('../models/ChuDe');
 
-// --- "Đầu bếp" 1: LẤY BÀI QUIZ THEO CHỦ ĐỀ ---
+const createQuiz = async (req, res) => {
+    try {
+        const { ma_chu_de, questions } = req.body;
+
+        if (!ma_chu_de || !questions || !Array.isArray(questions) || questions.length === 0) {
+            return res.status(400).json({ message: 'Dữ liệu quiz không hợp lệ.' });
+        }
+
+        await BaiQuiz.deleteMany({ ma_chu_de: ma_chu_de });
+
+        // Tạo một bài quiz mới dựa trên model BaiQuiz
+        const newQuiz = new BaiQuiz({
+            ma_chu_de: ma_chu_de,
+            questions: questions // Dữ liệu câu hỏi và câu trả lời từ client
+        });
+
+        await newQuiz.save();
+
+        res.status(201).json({ message: 'Tạo quiz thành công!', data: newQuiz });
+
+    } catch (error) {
+        console.error('Lỗi khi tạo quiz:', error);
+        res.status(500).json({ message: 'Lỗi server khi tạo quiz' });
+    }
+};
 const getQuizByTopic = async (req, res) => {
     try {
         const { ma_chu_de } = req.params;
@@ -84,9 +108,8 @@ const getHistoryByUser = async (req, res) => {
         res.status(500).json({ message: 'Lỗi server' });
     }
 };
-
-// <<< FIX: Chỉ export một object chứa các hàm controller >>>
 module.exports = {
+    createQuiz,     
     getQuizByTopic,
     submitQuiz,
     getHistoryByUser
