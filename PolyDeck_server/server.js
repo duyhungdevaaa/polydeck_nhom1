@@ -33,6 +33,9 @@ app.use('/api/auth', require('./routes/auth'));
 app.use('/api/users', require('./routes/nguoiDung'));      
 app.use('/api/chude', require('./routes/chuDe'));         
 app.use('/api/admin', require('./routes/admin'));
+app.use('/quiz', require('./routes/quiz'));
+
+
 
 // Debug/info endpoint: returns machine LAN IPs to help mobile testing
 app.get('/api/info', (req, res) => {
