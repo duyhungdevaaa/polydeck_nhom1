@@ -9,6 +9,7 @@ import com.nhom1.polydeck.data.model.GoogleLoginRequest;
 import com.nhom1.polydeck.data.model.LichSuLamBai;
 import com.nhom1.polydeck.data.model.LoginRequest;
 import com.nhom1.polydeck.data.model.LoginResponse;
+import com.nhom1.polydeck.data.model.BaiQuiz;
 import com.nhom1.polydeck.data.model.Quiz;
 import com.nhom1.polydeck.data.model.QuizBundle;
 import com.nhom1.polydeck.data.model.QuizResult;
@@ -136,6 +137,9 @@ public interface APIService {
     // ============= QUIZ MANAGEMENT =============
     @POST("api/quizzes")
     Call<Quiz> createQuiz(@Body Quiz quiz);
+
+    @GET("api/quizzes")
+    Call<List<BaiQuiz>> getAllQuizzes();
 
     @GET("api/quizzes/by-topic/{chuDeId}")
     Call<ApiResponse<QuizBundle>> getQuizByTopic(@Path("chuDeId") String deckId);
