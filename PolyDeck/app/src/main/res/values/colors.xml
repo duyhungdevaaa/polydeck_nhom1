@@ -31,7 +31,4 @@
 	
 	<!-- Bottom bar -->
 	<color name="yellow_bar">#FACC15</color> <!-- vivid amber for nav background -->
-
-	<!-- Error color used by item_quiz_admin.xml -->
-	<color name="red_error">#FF3B30</color>
 </resources>
