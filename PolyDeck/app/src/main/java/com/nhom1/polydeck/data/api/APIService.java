@@ -10,6 +10,7 @@ import com.nhom1.polydeck.data.model.GoogleLoginRequest;
 import com.nhom1.polydeck.data.model.LichSuLamBai;
 import com.nhom1.polydeck.data.model.LoginRequest;
 import com.nhom1.polydeck.data.model.LoginResponse;
+import com.nhom1.polydeck.data.model.BaiQuiz;
 import com.nhom1.polydeck.data.model.Quiz;
 import com.nhom1.polydeck.data.model.QuizBundle;
 import com.nhom1.polydeck.data.model.QuizResult;

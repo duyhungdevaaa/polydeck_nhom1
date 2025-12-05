@@ -81,7 +81,7 @@ public class LoginActivity extends AppCompatActivity {
         // TODO: Thay YOUR_WEB_CLIENT_ID bằng Google Client ID từ Google Cloud Console
         // Lấy từ: https://console.cloud.google.com/apis/credentials
         GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-                .requestIdToken("458654847284-06v4cluss9i716rhg3o8e1vmgbhvout1.apps.googleusercontent.com") // Web Client ID, không phải Android Client ID
+                .requestIdToken("108159029854-6lqv68h44cu1dphcn6t73eask9mje57m.apps.googleusercontent.com") // Web Client ID, không phải Android Client ID
                 .requestEmail()
                 .build();
 

@@ -1,18 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#FFFFFF"
-    android:gravity="center_horizontal"
-    android:orientation="vertical"
-    android:paddingStart="24dp"
-    android:paddingTop="55dp"
-    android:paddingEnd="24dp"
-    android:paddingBottom="32dp"
-    tools:context=".ui.activity.LoginActivity">
+    android:fillViewport="true"
+    android:background="#FFFFFF">
+
+    <LinearLayout
+        android:id="@+id/main"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_horizontal"
+        android:orientation="vertical"
+        android:paddingStart="24dp"
+        android:paddingTop="55dp"
+        android:paddingEnd="24dp"
+        android:paddingBottom="32dp"
+        tools:context=".ui.activity.LoginActivity">
 
     <ImageView
         android:id="@+id/logoView"
@@ -209,4 +214,6 @@
             android:textStyle="bold" />
     </LinearLayout>
 
-</LinearLayout>
+    </LinearLayout>
+
+</ScrollView>
